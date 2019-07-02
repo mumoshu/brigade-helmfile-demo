@@ -33,10 +33,16 @@ tasks:
 
   ngrok-status:
     script: |
-      ngrok_port=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services tunnel-ngrok)
-      node_ip=$(multipass ls | grep primary | awk '{ print $3 }')
-      open http://$node_ip:$ngrok_port/status
+      port=4040
+      kubectl port-forward svc/tunnel-ngrok $port &
+      open http://localhost:$port/status
 
   brig-dashboard:
     script: |
       brig dashboard
+
+  image:
+    script: |
+      image_tag=mumoshu/helmfile-chatops:0.1.0
+      docker build -t $image_tag .
+      docker push $image_tag

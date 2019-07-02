@@ -104,10 +104,17 @@ https://github.com/brigadecore/brigade
 1. Create the demo repository:
 
    ```console
+   git clone git@github.com:mumoshu/brigade-helmfile-chatops.git
+   cd $_
+   rm -rf .git/
+
    ORG=mumoshu # Replace with your org name!
    REPO=$ORG/demo-$(</dev/urandom dd ibs=1 obs=1 count=9 | od -tx1 -An | tr -d ' ')
 
+   git add .
+   git commit -m 'import'
    hub create $REPO
+   git push origin master
    ```
 
 2. Create a GitHub App for Brigade following [this guide](https://github.com/brigadecore/brigade-github-app/blob/c04ea3fa28f2e0a3a64d74131bfef1fe7698355a/README.md#1-create-a-github-app)
@@ -115,7 +122,8 @@ https://github.com/brigadecore/brigade
   - Navigate to `GitHub App > Private keys > Private key`, generate a private key by clicking `Generate a private key` button, download the private key and set its full path to `BRIGADE_GITHUB_APP_KEY`
   - Navigate to `GitHub App > About`, take a note of `App ID`, set it to `BRIGADE_GITHUB_APP_ID`
   - Navigate to `GitHub App > Webhook secret (optional)`. Generate a random password and put it there, also set it to `BRIGADE_PROJECT_SECRET`
-4. Set envvars:
+
+3. Set envvars:
 
    ```
    export NGROK_TOKEN=<Your ngrok token shown in https://dashboard.ngrok.com/get-started>
@@ -125,6 +133,29 @@ https://github.com/brigadecore/brigade
    export SSH_KEY=$HOME/.ssh/id_rsa (Or whatever ssh private key you want Brigade to use while git-cloning private Git repos)
    export GITHUB_TOKEN=<Used for updating commit/pull request statuses>
    ```
+
+4. Install all the apps onto your cluster:
+
+   ```
+   helm tiller run -- helmfile apply
+   ```
+
+7. 
+
+6. Configure the Brigade GitHub App:
+
+   Browse [`GitHub > Developer settings > GitHub Apps > <your brigade github app name>`](https://github.com/settings/apps) and add set `Webhook URL` to your Ngrok endpoint.
+
+   It woud look like: `https://<random string>.ngrok.io/events/github`
+
+7. Configure the GitHub App
+
+   Browse [`GithHub > Personal settings > Applications > Installed GitHub Apps > <your brigade github app name>`](https://github.com/settings/installations) and then click the `Configure` button right next to it.
+
+   Then add the demo repository for subscription:
+
+   ![image](https://user-images.githubusercontent.com/22009/60489311-fcd4fb80-9cde-11e9-9643-68bda0955423.png)
+
 
 ### The Desired State
 
