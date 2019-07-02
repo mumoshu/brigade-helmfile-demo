@@ -140,8 +140,6 @@ https://github.com/brigadecore/brigade
    helm tiller run -- helmfile apply
    ```
 
-7. 
-
 6. Configure the Brigade GitHub App:
 
    Browse [`GitHub > Developer settings > GitHub Apps > <your brigade github app name>`](https://github.com/settings/apps) and add set `Webhook URL` to your Ngrok endpoint.
