@@ -2,6 +2,24 @@ const { events, Job , Group} = require("brigadier")
 const dest = "/workspace"
 const image = "mumoshu/helmfile-chatops:0.2.0"
 
+function handleIssueComment(e, p) {
+  console.log("handling issue comment....")
+  payload = JSON.parse(e.payload);
+
+  // Extract the comment body and trim whitespace
+  comment = payload.body.comment.body.trim();
+
+  // Here we determine if a comment should provoke an action
+  switch(comment) {
+    case "/apply":
+      return run("apply", e, p)
+    default:
+      console.log(`No applicable action found for comment: ${comment}`);
+  }
+}
+
+events.on("issue_comment:created", handleIssueComment);
+
 events.on("push", (e, p) => {
   console.log(e.payload)
   var gh = JSON.parse(e.payload)
@@ -19,16 +37,20 @@ events.on("check_suite:rerequested", checkRequested)
 events.on("check_run:rerequested", checkRequested)
 
 async function checkRequested(e, p) {
+  return run("diff", e, p)
+}
+
+async function run(cmd, e, p) {
   console.log("check requested")
   // Common configuration
   const env = {
     CHECK_PAYLOAD: e.payload,
-    CHECK_NAME: "helmfile-diff",
+    CHECK_NAME: `helmfile-${cmd}`,
     CHECK_TITLE: "Detected Changes",
   }
 
   // This will represent our build job. For us, it's just an empty thinger.
-  const build = helmfile('diff')
+  const build = helmfile(cmd)
   build.streamLogs = true
 
   // For convenience, we'll create three jobs: one for each GitHub Check
