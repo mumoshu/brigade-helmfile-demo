@@ -6,7 +6,7 @@ events.on("push", (e, p) => {
   console.log(e.payload)
   var gh = JSON.parse(e.payload)
   if (e.type == "pull_request") {
-    helmfile("diff").run()
+    //helmfile("diff").run()
   } else {
     helmfile("apply").run()
   }
@@ -23,12 +23,13 @@ function checkRequested(e, p) {
   // Common configuration
   const env = {
     CHECK_PAYLOAD: e.payload,
-    CHECK_NAME: "MyService",
-    CHECK_TITLE: "Echo Test",
+    CHECK_NAME: "helmfile-diff",
+    CHECK_TITLE: "Detected Changes",
   }
 
   // This will represent our build job. For us, it's just an empty thinger.
   const build = helmfile('diff')
+  build.streamLogs = true
 
   // For convenience, we'll create three jobs: one for each GitHub Check
   // stage.
@@ -55,10 +56,14 @@ function checkRequested(e, p) {
     end.env.CHECK_TEXT = result.toString()
     return end.run()
   }).catch( (err) => {
+    logs = await build.logs()
     // In this case, we mark the ending failed.
     end.env.CHECK_CONCLUSION = "failure"
     end.env.CHECK_SUMMARY = "Build failed"
-    end.env.CHECK_TEXT = `Error: ${ err }`
+    end.env.CHECK_TEXT = `Error: ${ err }
+
+Logs:
+${ logs }`
     return end.run()
   })
 }

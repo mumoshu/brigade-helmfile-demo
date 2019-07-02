@@ -7,14 +7,17 @@ tasks:
 
   sync:
     script: |
+      helm init --client-only
       helm tiller run -- helmfile sync
 
   apply:
     script: |
+      helm init --client-only
       helm tiller run -- helmfile apply --suppress-secrets
 
   diff:
     script: |
+      helm init --client-only
       helm tiller run -- helmfile diff --suppress-secrets --detailed-exitcode
 
   polaris:
