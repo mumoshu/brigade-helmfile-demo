@@ -1,6 +1,6 @@
 const { events, Job , Group} = require("brigadier")
 const dest = "/workspace"
-const image = "mumoshu/helmfile-gitops:dev"
+const image = "mumoshu/helmfile-chatops:0.2.0"
 
 events.on("push", (e, p) => {
   console.log(e.payload)

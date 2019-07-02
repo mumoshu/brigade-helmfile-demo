@@ -37,5 +37,5 @@ releases:
         console.log("hello default script")
       }
       events.on("run", run)
-    sshKey:
+    sshKey: |
 {{ readFile (requiredEnv "SSH_KEY") | indent 6 }}

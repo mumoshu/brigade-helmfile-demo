@@ -366,7 +366,36 @@ You've got everything!
 1. GitOps operator (Flux or Argo CD) **OR** Universal system for running CI and CD pipelines (brigade)
 2. Universal tool for deploying whatever (helm, kustomize, k8s manifests, helm-x, helmfile)
 
-## Who the author was?
+## Flight rules
+
+This section tries to summarize all the possible errors and failures you might encounter while following this demo.
+
+### brigade-github-app: Expected signature "sha1=<omitted>" (sum), got "sha1=<omitted>" (hub-signature)
+
+```
+brigade-brigade-github-app-65f85998c9-g29bd brigade-github-app Expected signature "sha1=534be2a1d55133e35fb994c3f88072bae7de23ca" (sum), got "sha1=d895929b47181bed0cddba19d2b7c4de1c4f5869" (hub-signature)
+brigade-brigade-github-app-65f85998c9-g29bd brigade-github-app [GIN] 2019/07/02 - 07:18:03 | 403 |      7.3981ms |   140.82.115.70 |  POST     /events/github
+```
+
+Try updating your Brigade GitHub App's `Webhook secret` on GitHub and `sharedSecret` on your helm release to match. The hub sigunature is calculated according to that.
+
+### vcs-sidecar: Could not read from remote repository
+
+```
+brigade-worker-01ders1ktdajnkzd5r29154e3v vcs-sidecar Warning: Permanently added 'github.com,52.69.186.44' (RSA) to the list of known hosts.
+brigade-worker-01ders1ktdajnkzd5r29154e3v vcs-sidecar Load key "./id_dsa": invalid format
+brigade-worker-01ders1ktdajnkzd5r29154e3v vcs-sidecar git@github.com: Permission denied (publickey).
+brigade-worker-01ders1ktdajnkzd5r29154e3v vcs-sidecar fatal: Could not read from remote repository.
+brigade-worker-01ders1ktdajnkzd5r29154e3v vcs-sidecar
+brigade-worker-01ders1ktdajnkzd5r29154e3v vcs-sidecar Please make sure you have the correct access rights
+brigade-worker-01ders1ktdajnkzd5r29154e3v vcs-sidecar and the repository exists.
+brigade-worker-01ders1ktdajnkzd5r29154e3v vcs-sidecar + test 2 -lt 5
+brigade-worker-01ders1ktdajnkzd5r29154e3v vcs-sidecar + echo 'Command failed. Attempt 2/5. Waiting for 10 seconds before retrying.'
+brigade-worker-01ders1ktdajnkzd5r29154e3v vcs-sidecar + sleep 10
+brigade-worker-01ders1ktdajnkzd5r29154e3v vcs-sidecar Command failed. Attempt 2/5. Waiting for 10 seconds before retrying.
+```
+
+## Who the author is?
 
 @mumoshu
 
