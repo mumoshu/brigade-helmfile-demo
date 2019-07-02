@@ -1,0 +1,41 @@
+helmfiles:
+- ngrok.helmfile.yaml
+
+repositories:
+- name: brigade
+  url: https://brigadecore.github.io/charts
+
+releases:
+- name: brigade
+  chart: brigade/brigade
+  values:
+  - rbac:
+      enabled: true
+    registry: brigadecore
+    name: brigade-github-app
+    brigade-github-app:
+      enabled: true
+      github:
+        key: |
+{{ readFile (requiredEnv "BRIGADE_GITHUB_APP_KEY") | indent 10 }}
+        checkSuiteOnPR: true
+        appID: {{ requiredEnv "BRIGADE_GITHUB_APP_ID" }}
+- name: project
+  chart: brigade/brigade-project
+  values:
+  {{ $repo := requiredEnv "REPO" }}
+  - project: "{{ $repo }}"
+    repository: "github.com/{{ $repo }}"
+    cloneURL: "git@github.com:{{ $repo }}.git"
+    secrets: {}
+    github:
+      token: {{ requiredEnv "GITHUB_TOKEN" }}
+    sharedSecret: {{ requiredEnv "BRIGADE_PROJECT_SECRET" }}
+    defaultScript: |
+      const { events, Job } = require("brigadier")
+      function run(e, project) {
+        console.log("hello default script")
+      }
+      events.on("run", run)
+    sshKey:
+{{ readFile (requiredEnv "SSH_KEY") | indent 6 }}
