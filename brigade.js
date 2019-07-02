@@ -55,7 +55,7 @@ async function checkRequested(e, p) {
     end.env.CHECK_SUMMARY = "Build completed"
     end.env.CHECK_TEXT = result.toString()
     return end.run()
-  }).catch( (err) => {
+  }).catch( async (err) => {
     logs = await build.logs()
     // In this case, we mark the ending failed.
     end.env.CHECK_CONCLUSION = "failure"
