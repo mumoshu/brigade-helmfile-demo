@@ -84,36 +84,42 @@ async function runGithubCheckWithHelmfile(cmd, e, p) {
     end.imageForcePull = imageForcePull
     end.env = env
 
-    // Now we run the jobs in order:
-    // - Notify GitHub of start
-    // - Run the test
-    // - Notify GitHub of completion
-    //
-    // On error, we catch the error and notify GitHub of a failure.
-    return start.run().then(() => {
+    try {
+        // Now we run the jobs in order:
+        // - Notify GitHub of start
+        // - Run the test
+        // - Notify GitHub of completion
+        //
+        // On error, we catch the error and notify GitHub of a failure.
+        await start.run()
         // In case you see errors like the below in a helmfile pod:
         //   Error: secrets is forbidden: User "system:serviceaccount:default:brigade-worker" cannot list resource "secrets" in API group "" in the namespace "kube-system"
         // It is likely you don't have correct premissions provided to the job pod that runs helmfile.
         // Run something like the below, for testing purpose:
         //   kubectl create clusterrolebinding brigade-worker-as-cluster-admin --serviceaccount default:brigade-worker --clusterrole cluster-admin
         // Hopefully you'll use something stricter in a prod env :)
-        return build.run()
-    }).then((result) => {
+        await build.run()
+
         end.env.CHECK_CONCLUSION = "success"
         end.env.CHECK_SUMMARY = "Build completed"
         end.env.CHECK_TEXT = result.toString()
-        return end.run()
-    }).catch((err) => {
-        // logs = await build.logs()
+    } catch (err) {
+        let logs = "N/A"
+        try {
+            logs = await build.logs()
+        } catch (err2) {
+            console.log("failed while gathering logs", err2)
+        }
+
         // In this case, we mark the ending failed.
         end.env.CHECK_CONCLUSION = "failure"
         end.env.CHECK_SUMMARY = "Build failed"
-        end.env.CHECK_TEXT = `Error: ${err}`
+        end.env.CHECK_TEXT = `Error: ${err}
 
-        // Logs:
-        // ${ logs }`
-        return end.run()
-    })
+Logs:
+${logs}`
+    }
+    return await end.run()
 }
 
 function helmfile(cmd) {
