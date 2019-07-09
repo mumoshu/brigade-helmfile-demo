@@ -85,10 +85,10 @@ async function run(cmd, e, p) {
     // In this case, we mark the ending failed.
     end.env.CHECK_CONCLUSION = "failure"
     end.env.CHECK_SUMMARY = "Build failed"
-    end.env.CHECK_TEXT = `Error: ${ err }
+    end.env.CHECK_TEXT = `Error: ${ err }`
 
-Logs:
-${ logs }`
+// Logs:
+// ${ logs }`
     return end.run()
   })
 }
