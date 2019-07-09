@@ -74,8 +74,8 @@ async function logEvent(e, p) {
     // await gh.addComment(owner, repo, issue, `Processing ${comment}`, ghtoken)
 }
 
-async function checkRequested(id) {
-    return (e, p) => {
+function checkRequested(id) {
+    return async (e, p) => {
         payload = JSON.parse(e.payload)
         console.log(`${id}.payload`, payload)
         return runGithubCheckWithHelmfile("diff", e, p)
