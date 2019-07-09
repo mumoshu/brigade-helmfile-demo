@@ -1,4 +1,4 @@
-const { events, Job , Group} = require("brigadier")
+const { events, Job, Group } = require("brigadier")
 const gh = require("./http")
 const dest = "/workspace"
 const image = "mumoshu/helmfile-chatops:0.2.0"
@@ -13,14 +13,16 @@ async function handleIssueComment(e, p) {
   console.log(p)
   console.log(payload, payload.body.repository.owner)
 
-  await gh.addComment('mumoshu', payload.body.repository.name, payload.body.issue.number, `Processing ${comment}`, p.secrets.githubToken)
-
   // Here we determine if a comment should provoke an action
-  switch(comment) {
+  switch (comment) {
     case "/apply":
+      await gh.addComment('mumoshu', payload.body.repository.name, payload.body.issue.number, `Processing ${comment}`, p.secrets.githubToken)
       await run("apply", e, p)
       await gh.addComment('mumoshu', 'demo-78a64c769a615eb776', '2', `Finished processing ${comment}`, p.secrets.githubToken)
     default:
+      if (comment.startsWith("/")) {
+        await gh.addComment('mumoshu', payload.body.repository.name, payload.body.issue.number, `Unsupported command ${comment}`, p.secrets.githubToken)
+      }
       console.log(`No applicable action found for comment: ${comment}`);
   }
 }
@@ -79,31 +81,31 @@ async function run(cmd, e, p) {
   // On error, we catch the error and notify GitHub of a failure.
   return start.run().then(() => {
     return build.run()
-  }).then( (result) => {
+  }).then((result) => {
     end.env.CHECK_CONCLUSION = "success"
     end.env.CHECK_SUMMARY = "Build completed"
     end.env.CHECK_TEXT = result.toString()
     return end.run()
-  }).catch( (err) => {
+  }).catch((err) => {
     // logs = await build.logs()
     // In this case, we mark the ending failed.
     end.env.CHECK_CONCLUSION = "failure"
     end.env.CHECK_SUMMARY = "Build failed"
-    end.env.CHECK_TEXT = `Error: ${ err }`
+    end.env.CHECK_TEXT = `Error: ${err}`
 
-// Logs:
-// ${ logs }`
+    // Logs:
+    // ${ logs }`
     return end.run()
   })
 }
 
 function helmfile(cmd) {
-    var job = new Job(cmd, image)
-    job.tasks = [
-        "mkdir -p " + dest,
-        "cp -a /src/* " + dest,
-        "cd " + dest,
-        `variant ${cmd}`,
-    ]
-    return job
+  var job = new Job(cmd, image)
+  job.tasks = [
+    "mkdir -p " + dest,
+    "cp -a /src/* " + dest,
+    "cd " + dest,
+    `variant ${cmd}`,
+  ]
+  return job
 }
