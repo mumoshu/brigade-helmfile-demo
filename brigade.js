@@ -65,7 +65,7 @@ async function logEvent(e, p) {
     if (payload.body.check_run) {
         let run = payload.body.check_run;
         suite = run.check_suite
-        msg = `Check run [${run.name}](${run.url}) finished with \`${run.conclusion}\``
+        msg = `Check run [${run.name}](${run.html_url}) finished with \`${run.conclusion}\``
     } else {
         suite = payload.body.check_suite
         msg = `Check suite [${suite.id}](${suite.url}) finished with \`${suite.conclusion}\``
