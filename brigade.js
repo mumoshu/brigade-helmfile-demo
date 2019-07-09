@@ -48,9 +48,9 @@ events.on("push", (e, p) => {
 
 const checkRunImage = "brigadecore/brigade-github-check-run:latest"
 
-events.on("check_suite:requested", checkRequested)
-events.on("check_suite:rerequested", checkRequested)
-events.on("check_run:rerequested", checkRequested)
+events.on("check_suite:requested", checkRequested('check_suite:requested'))
+events.on("check_suite:rerequested", checkRequested('check_suite:rerequested'))
+events.on("check_run:rerequested", checkRequested('check_run:rerequested'))
 events.on("check_run:completed", logEvent)
 events.on("check_suite:completed", logEvent)
 
@@ -74,8 +74,12 @@ async function logEvent(e, p) {
     // await gh.addComment(owner, repo, issue, `Processing ${comment}`, ghtoken)
 }
 
-async function checkRequested(e, p) {
-    return runGithubCheckWithHelmfile("diff", e, p)
+async function checkRequested(id) {
+    return (e, p) => {
+        payload = JSON.parse(e.payload)
+        console.log(`${id}.payload`, payload)
+        return runGithubCheckWithHelmfile("diff", e, p)
+    }
 }
 
 // runGithubCheckWithHelmfile runs `helmfile ${cmd}` within a GitHub Check, so that its status(success, failure) and logs
