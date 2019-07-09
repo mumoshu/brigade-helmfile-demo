@@ -103,8 +103,8 @@ async function runGithubCheckWithHelmfile(cmd, e, p) {
         // On error, we catch the error and notify GitHub of a failure.
         let startResult = await start.run()
 
-        let check = JSON.parse(startResult.toString())
-        console.log('check', check)
+        // let check = JSON.parse(startResult.toString())
+        console.log('check', startResult.toString())
 
         // In case you see errors like the below in a helmfile pod:
         //   Error: secrets is forbidden: User "system:serviceaccount:default:brigade-worker" cannot list resource "secrets" in API group "" in the namespace "kube-system"
