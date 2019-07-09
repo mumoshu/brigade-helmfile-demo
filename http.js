@@ -74,6 +74,16 @@ function get(url, token) {
         }
     })
 }
+function post(url, params, token) {
+    return request(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `token ${token}`
+        },
+        parameters: params
+    })
+}
 
 function checkAuth(token) {
     return request(`https://api.github.com`, {
@@ -87,3 +97,4 @@ function checkAuth(token) {
 
 module.exports.addComment = addComment
 module.exports.get = get
+module.exports.post = post

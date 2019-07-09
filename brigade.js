@@ -61,16 +61,22 @@ async function logEvent(e, p) {
     console.log('payload', payload)
     console.log('payload.body', payload.body)
     let suite = undefined
+    let msg = undefined
     if (payload.body.check_run) {
-        suite = payload.body.check_run.check_suite
+        let run = payload.body.check_run;
+        suite = run.check_suite
+        msg = `Check run [${run.name}](${run.url}) finished with \`${run.conclusion}\``
     } else {
         suite = payload.body.check_suite
+        msg = `Check suite [${suite.id}](${suite.url}) finished with \`${suite.conclusion}\``
     }
     console.log('check_suite', suite)
     let prUrl = suite.pull_requests[0].url
     let resBody = await gh.get(prUrl, p.secrets.githubToken)
-    let res = JSON.parse(resBody)
+    let pr = JSON.parse(resBody)
     console.log('res', res)
+
+    await gh.post(pr.comments_url, {body: msg})
 
     // tmp = payload.body.repository.owner.html_url.split('/')
     // let owner = tmp[tmp.length - 1]
