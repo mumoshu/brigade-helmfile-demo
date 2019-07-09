@@ -10,6 +10,8 @@ function handleIssueComment(e, p) {
   // Extract the comment body and trim whitespace
   comment = payload.body.comment.body.trim();
 
+  console.log(payload)
+
   gh.addComment('mumoshu', 'demo-78a64c769a615eb776', '2', 'test comment', payload.token)
 
   // Here we determine if a comment should provoke an action
