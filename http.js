@@ -86,3 +86,4 @@ function checkAuth(token) {
 }
 
 module.exports.addComment = addComment
+module.exports.get = get
