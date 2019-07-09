@@ -10,7 +10,8 @@ async function handleIssueComment(e, p) {
   // Extract the comment body and trim whitespace
   comment = payload.body.comment.body.trim();
 
-  console.log(payload, payload.repository.owner)
+  console.log(p)
+  console.log(payload, payload.body.repository.owner)
 
   await gh.addComment('mumoshu', payload.body.repository.name, payload.body.issue.number, `Processing ${comment}`, p.secrets.githubToken)
 
