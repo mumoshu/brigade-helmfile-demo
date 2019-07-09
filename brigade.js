@@ -10,14 +10,15 @@ async function handleIssueComment(e, p) {
   // Extract the comment body and trim whitespace
   comment = payload.body.comment.body.trim();
 
-  console.log(payload)
+  console.log(payload, payload.repository.owner)
 
-  await gh.addComment('mumoshu', 'demo-78a64c769a615eb776', '2', 'test comment', payload.token)
+  await gh.addComment('mumoshu', payload.body.repository.name, payload.body.issue.number, `Processing ${comment}`, p.secrets.githubToken)
 
   // Here we determine if a comment should provoke an action
   switch(comment) {
     case "/apply":
-      return run("apply", e, p)
+      await run("apply", e, p)
+      await gh.addComment('mumoshu', 'demo-78a64c769a615eb776', '2', `Finished processing ${comment}`, p.secrets.githubToken)
     default:
       console.log(`No applicable action found for comment: ${comment}`);
   }

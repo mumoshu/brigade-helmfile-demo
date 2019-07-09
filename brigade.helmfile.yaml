@@ -27,7 +27,9 @@ releases:
   - project: "{{ $repo }}"
     repository: "github.com/{{ $repo }}"
     cloneURL: "git@github.com:{{ $repo }}.git"
-    secrets: {}
+    secrets:
+      # Used from within brigade.js to add comments to GitHub issues
+      githubToken: {{ requiredEnv "GITHUB_TOKEN" }}
     github:
       token: {{ requiredEnv "GITHUB_TOKEN" }}
     sharedSecret: {{ requiredEnv "BRIGADE_PROJECT_SECRET" }}
