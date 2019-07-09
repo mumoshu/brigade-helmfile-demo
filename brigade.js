@@ -3,7 +3,7 @@ const gh = require("./http")
 const dest = "/workspace"
 const image = "mumoshu/helmfile-chatops:0.2.0"
 
-function handleIssueComment(e, p) {
+async function handleIssueComment(e, p) {
   console.log("handling issue comment....")
   payload = JSON.parse(e.payload);
 
@@ -12,7 +12,7 @@ function handleIssueComment(e, p) {
 
   console.log(payload)
 
-  gh.addComment('mumoshu', 'demo-78a64c769a615eb776', '2', 'test comment', payload.token)
+  await gh.addComment('mumoshu', 'demo-78a64c769a615eb776', '2', 'test comment', payload.token)
 
   // Here we determine if a comment should provoke an action
   switch(comment) {
