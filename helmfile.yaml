@@ -5,8 +5,6 @@ helmfiles:
 - brigade.helmfile.yaml
 
 repositories:
-- name: istio.io
-  url: https://storage.googleapis.com/istio-release/releases/1.1.3/charts/
 - name: stable
   url: https://kubernetes-charts.storage.googleapis.com
 - name: incubator
