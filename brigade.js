@@ -108,7 +108,7 @@ async function runGithubCheckWithHelmfile(cmd, e, p) {
         try {
             logs = await build.logs()
         } catch (err2) {
-            console.log("failed while gathering logs", err2)
+            console.log("failed while gathering logs", {cmd: cmd}, err2)
         }
 
         // In this case, we mark the ending failed.
