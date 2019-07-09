@@ -56,7 +56,7 @@ events.on("check_suite:completed", logEvent)
 
 async function logEvent(e, p) {
     console.log('event', e)
-    console.log('payload'. JSON.parse(p))
+    console.log('payload', JSON.parse(p))
 }
 
 async function checkRequested(e, p) {
