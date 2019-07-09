@@ -57,3 +57,5 @@ function addComment(org, repo, issue, body, token) {
 }
 
 //addComment('mumoshu', 'demo-78a64c769a615eb776', '2', 'test comment', process.env.GITHUB_OAUTH_TOKEN)
+
+module.exports.addComment = addComment
