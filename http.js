@@ -1,41 +1,33 @@
-// Compatibility for old nodejs(pre 10)
-var URL = require('url').URL;
-
-const getContent = function (urlstr, options) {
+const request = function (urlstr, options) {
     // return new pending promise
     return new Promise((resolve, reject) => {
         // select http or https module, depending on reqested url
         const lib = urlstr.startsWith('https') ? require('https') : require('http');
-        u = new URL(urlstr)
-        //console.log(u)
-        options.host = u.hostname
-        options.port = u.port
-        options.path = u.pathname
-        if (!options.port) {
-            if (u.protocol.startsWith('https:')) {
-                options.port = 443
-            } else {
-                options.port = 80
-            }
-        }
-        params = options.params
-        delete options.params
+        options.headers['User-Agent'] = 'Brigade-Worker'
+        params = options.parameters
+        delete options.parameters
         if (params) {
             body = JSON.stringify(params)
             options.headers['Content-Length'] = body.length
         }
-        //console.log(options)
-        const request = lib.request(options, (response) => {
-            // handle http errors
-            if (response.statusCode < 200 || response.statusCode > 299) {
-                reject(new Error('Failed to load page, status code: ' + response.statusCode));
-            }
+        console.log('http.request', options)
+        const request = lib.request(urlstr, options, (response) => {
+            console.log('http.response', { status: `${response.statusCode}`, headers: JSON.stringify(response.headers) });
+            response.setEncoding('utf8');
+
             // temporary data holder
             const body = [];
             // on every content chunk, push it to the data array
             response.on('data', (chunk) => body.push(chunk));
             // we are done, resolve promise with those joined chunks
-            response.on('end', () => resolve(body.join('')));
+            response.on('end', () => {
+                // handle http errors
+                if (response.statusCode < 200 || response.statusCode > 299) {
+                    reject(new Error('Failed to load page, status code: ' + response.statusCode + ': ' + body.join('')));
+                } else {
+                    resolve(body.join(''))
+                }
+            })
         });
         // handle connection errors of the request
         request.on('error', (err) => reject(err))
@@ -47,18 +39,26 @@ const getContent = function (urlstr, options) {
 };
 
 function addComment(org, repo, issue, body, token) {
-    getContent(`https://api.github.com/repos/${org}/${repo}/issues/${issue}/comments`, {
+    return request(`https://api.github.com/repos/${org}/${repo}/issues/${issue}/comments`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `token ${token}`
         },
-        params: {
+        parameters: {
             body: body,
         },
     })
 }
 
-//addComment('mumoshu', 'demo-78a64c769a615eb776', '2', 'test comment', process.env.GITHUB_OAUTH_TOKEN)
+function checkAuth(token) {
+    return request(`https://api.github.com`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            "Authorization": `token ${token}`
+        }
+    })
+}
 
 module.exports.addComment = addComment
