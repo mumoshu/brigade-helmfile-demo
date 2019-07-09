@@ -91,6 +91,12 @@ async function runGithubCheckWithHelmfile(cmd, e, p) {
     //
     // On error, we catch the error and notify GitHub of a failure.
     return start.run().then(() => {
+        // In case you see errors like the below in a helmfile pod:
+        //   Error: secrets is forbidden: User "system:serviceaccount:default:brigade-worker" cannot list resource "secrets" in API group "" in the namespace "kube-system"
+        // It is likely you don't have correct premissions provided to the job pod that runs helmfile.
+        // Run something like the below, for testing purpose:
+        //   kubectl create clusterrolebinding brigade-worker-as-cluster-admin --serviceaccount default:brigade-worker --clusterrole cluster-admin
+        // Hopefully you'll use something stricter in a prod env :)
         return build.run()
     }).then((result) => {
         end.env.CHECK_CONCLUSION = "success"
