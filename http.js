@@ -1,3 +1,5 @@
+const  URL = require('url').URL
+
 const request = function (urlstr, options) {
     // return new pending promise
     return new Promise((resolve, reject) => {
