@@ -1,43 +1,49 @@
-const { events, Job, Group } = require("brigadier")
+const {events, Job, Group} = require("brigadier")
 const gh = require("./http")
 const dest = "/workspace"
 const image = "mumoshu/helmfile-chatops:0.2.0"
 
 async function handleIssueComment(e, p) {
-  console.log("handling issue comment....")
-  payload = JSON.parse(e.payload);
+    console.log("handling issue comment....")
+    payload = JSON.parse(e.payload);
 
-  // Extract the comment body and trim whitespace
-  comment = payload.body.comment.body.trim();
+    // Extract the comment body and trim whitespace
+    comment = payload.body.comment.body.trim();
 
-  console.log(p)
-  console.log(payload, payload.body.repository.owner)
+    console.log("project", p)
+    console.log("payload", payload)
+    console.log("owner", payload.body.repository.owner)
 
-  // Here we determine if a comment should provoke an action
-  switch (comment) {
-    case "/apply":
-      await gh.addComment('mumoshu', payload.body.repository.name, payload.body.issue.number, `Processing ${comment}`, p.secrets.githubToken)
-      await run("apply", e, p)
-      await gh.addComment('mumoshu', 'demo-78a64c769a615eb776', '2', `Finished processing ${comment}`, p.secrets.githubToken)
-      break
-    default:
-      if (comment.startsWith("/")) {
-        await gh.addComment('mumoshu', payload.body.repository.name, payload.body.issue.number, `Unsupported command ${comment}`, p.secrets.githubToken)
-      }
-      console.log(`No applicable action found for comment: ${comment}`);
-  }
+    tmp = payload.body.repository.owner.split('/')
+    let owner = tmp[tmp.length - 1]
+    let repo = payload.body.repository.name;
+    let issue = payload.body.issue.number;
+    let ghtoken = p.secrets.githubToken;
+
+    // Here we determine if a comment should provoke an action
+    switch (comment) {
+        case "/apply":
+            await gh.addComment(owner, repo, issue, `Processing ${comment}`, ghtoken)
+            await runGithubCheckWithHelmfile("apply", e, p)
+            await gh.addComment(owner, repo, issue, `Finished processing ${comment}`, ghtoken)
+            break
+        default:
+            if (comment.startsWith("/")) {
+                await gh.addComment('mumoshu', repo, issue, `Unsupported command ${comment}`, ghtoken)
+            }
+            console.log(`No applicable action found for comment: ${comment}`);
+    }
 }
 
 events.on("issue_comment:created", handleIssueComment);
 
 events.on("push", (e, p) => {
-  console.log(e.payload)
-  var gh = JSON.parse(e.payload)
-  if (e.type == "pull_request") {
-    //helmfile("diff").run()
-  } else {
-    helmfile("apply").run()
-  }
+    console.log("handling push....")
+    console.log("payload", e.payload)
+    var gh = JSON.parse(e.payload)
+    if (e.type != "pull_request") {
+        helmfile("apply").run()
+    }
 });
 
 const checkRunImage = "brigadecore/brigade-github-check-run:latest"
@@ -47,66 +53,70 @@ events.on("check_suite:rerequested", checkRequested)
 events.on("check_run:rerequested", checkRequested)
 
 async function checkRequested(e, p) {
-  return run("diff", e, p)
+    return runGithubCheckWithHelmfile("diff", e, p)
 }
 
-async function run(cmd, e, p) {
-  console.log("check requested")
-  // Common configuration
-  const env = {
-    CHECK_PAYLOAD: e.payload,
-    CHECK_NAME: `helmfile-${cmd}`,
-    CHECK_TITLE: "Detected Changes",
-  }
+// runGithubCheckWithHelmfile runs `helmfile ${cmd}` within a GitHub Check, so that its status(success, failure) and logs
+// are visible in the pull request UI.
+async function runGithubCheckWithHelmfile(cmd, e, p) {
+    const imageForcePull = false
 
-  // This will represent our build job. For us, it's just an empty thinger.
-  const build = helmfile(cmd)
-  build.streamLogs = true
+    console.log("check requested")
+    // Common configuration
+    const env = {
+        CHECK_PAYLOAD: e.payload,
+        CHECK_NAME: `helmfile-${cmd}`,
+        CHECK_TITLE: "Detected Changes",
+    }
 
-  // For convenience, we'll create three jobs: one for each GitHub Check
-  // stage.
-  const start = new Job("start-run", checkRunImage)
-  start.imageForcePull = true
-  start.env = env
-  start.env.CHECK_SUMMARY = "Beginning test run"
+    // This will represent our build job. For us, it's just an empty thinger.
+    const build = helmfile(cmd)
+    build.streamLogs = true
 
-  const end = new Job("end-run", checkRunImage)
-  end.imageForcePull = true
-  end.env = env
+    // For convenience, we'll create three jobs: one for each GitHub Check
+    // stage.
+    const start = new Job("start-run", checkRunImage)
+    start.imageForcePull = imageForcePull
+    start.env = env
+    start.env.CHECK_SUMMARY = "Beginning test run"
 
-  // Now we run the jobs in order:
-  // - Notify GitHub of start
-  // - Run the test
-  // - Notify GitHub of completion
-  //
-  // On error, we catch the error and notify GitHub of a failure.
-  return start.run().then(() => {
-    return build.run()
-  }).then((result) => {
-    end.env.CHECK_CONCLUSION = "success"
-    end.env.CHECK_SUMMARY = "Build completed"
-    end.env.CHECK_TEXT = result.toString()
-    return end.run()
-  }).catch((err) => {
-    // logs = await build.logs()
-    // In this case, we mark the ending failed.
-    end.env.CHECK_CONCLUSION = "failure"
-    end.env.CHECK_SUMMARY = "Build failed"
-    end.env.CHECK_TEXT = `Error: ${err}`
+    const end = new Job("end-run", checkRunImage)
+    end.imageForcePull = imageForcePull
+    end.env = env
 
-    // Logs:
-    // ${ logs }`
-    return end.run()
-  })
+    // Now we run the jobs in order:
+    // - Notify GitHub of start
+    // - Run the test
+    // - Notify GitHub of completion
+    //
+    // On error, we catch the error and notify GitHub of a failure.
+    return start.run().then(() => {
+        return build.run()
+    }).then((result) => {
+        end.env.CHECK_CONCLUSION = "success"
+        end.env.CHECK_SUMMARY = "Build completed"
+        end.env.CHECK_TEXT = result.toString()
+        return end.run()
+    }).catch((err) => {
+        // logs = await build.logs()
+        // In this case, we mark the ending failed.
+        end.env.CHECK_CONCLUSION = "failure"
+        end.env.CHECK_SUMMARY = "Build failed"
+        end.env.CHECK_TEXT = `Error: ${err}`
+
+        // Logs:
+        // ${ logs }`
+        return end.run()
+    })
 }
 
 function helmfile(cmd) {
-  var job = new Job(cmd, image)
-  job.tasks = [
-    "mkdir -p " + dest,
-    "cp -a /src/* " + dest,
-    "cd " + dest,
-    `variant ${cmd}`,
-  ]
-  return job
+    var job = new Job(cmd, image)
+    job.tasks = [
+        "mkdir -p " + dest,
+        "cp -a /src/* " + dest,
+        "cd " + dest,
+        `variant ${cmd}`,
+    ]
+    return job
 }
