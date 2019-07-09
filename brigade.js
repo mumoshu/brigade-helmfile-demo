@@ -51,6 +51,13 @@ const checkRunImage = "brigadecore/brigade-github-check-run:latest"
 events.on("check_suite:requested", checkRequested)
 events.on("check_suite:rerequested", checkRequested)
 events.on("check_run:rerequested", checkRequested)
+events.on("check_run:completed", logEvent)
+events.on("check_suite:completed", logEvent)
+
+async function logEvent(e, p) {
+    console.log('event', e)
+    console.log('payload'. JSON.parse(p))
+}
 
 async function checkRequested(e, p) {
     return runGithubCheckWithHelmfile("diff", e, p)
