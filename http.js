@@ -3,6 +3,18 @@ const request = function (urlstr, options) {
     return new Promise((resolve, reject) => {
         // select http or https module, depending on reqested url
         const lib = urlstr.startsWith('https') ? require('https') : require('http');
+        u = new URL(urlstr)
+        //console.log(u)
+        options.host = u.hostname
+        options.port = u.port
+        options.path = u.pathname
+        if (!options.port) {
+            if (u.protocol.startsWith('https:')) {
+                options.port = 443
+            } else {
+                options.port = 80
+            }
+        }
         options.headers['User-Agent'] = 'Brigade-Worker'
         params = options.parameters
         delete options.parameters
@@ -11,7 +23,7 @@ const request = function (urlstr, options) {
             options.headers['Content-Length'] = body.length
         }
         console.log('http.request', options)
-        const request = lib.request(urlstr, options, (response) => {
+        const request = lib.request(options, (response) => {
             console.log('http.response', { status: `${response.statusCode}`, headers: JSON.stringify(response.headers) });
             response.setEncoding('utf8');
 
