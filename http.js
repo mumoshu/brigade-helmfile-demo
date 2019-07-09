@@ -1,3 +1,6 @@
+// Compatibility for old nodejs(pre 10)
+var URL = require('url').URL;
+
 const getContent = function (urlstr, options) {
     // return new pending promise
     return new Promise((resolve, reject) => {
