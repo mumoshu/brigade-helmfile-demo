@@ -76,7 +76,7 @@ async function logEvent(e, p) {
     let pr = JSON.parse(resBody)
     console.log('pr', pr)
 
-    await gh.post(pr.comments_url, {body: msg})
+    await gh.post(pr.comments_url, {body: msg}, p.secrets.githubToken)
 
     // tmp = payload.body.repository.owner.html_url.split('/')
     // let owner = tmp[tmp.length - 1]
