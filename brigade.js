@@ -19,6 +19,7 @@ async function handleIssueComment(e, p) {
       await gh.addComment('mumoshu', payload.body.repository.name, payload.body.issue.number, `Processing ${comment}`, p.secrets.githubToken)
       await run("apply", e, p)
       await gh.addComment('mumoshu', 'demo-78a64c769a615eb776', '2', `Finished processing ${comment}`, p.secrets.githubToken)
+      break
     default:
       if (comment.startsWith("/")) {
         await gh.addComment('mumoshu', payload.body.repository.name, payload.body.issue.number, `Unsupported command ${comment}`, p.secrets.githubToken)
