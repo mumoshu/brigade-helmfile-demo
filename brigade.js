@@ -68,7 +68,7 @@ async function logEvent(e, p) {
     }
     console.log('check_suite', suite)
     let prUrl = suite.pull_requests[0].url
-    let resBody = await gh.get(prUrl)
+    let resBody = await gh.get(prUrl, p.secrets.githubToken)
     let res = JSON.parse(resBody)
     console.log('res', res)
 
