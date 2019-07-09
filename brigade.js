@@ -51,10 +51,10 @@ const checkRunImage = "brigadecore/brigade-github-check-run:latest"
 events.on("check_suite:requested", checkRequested('check_suite:requested'))
 events.on("check_suite:rerequested", checkRequested('check_suite:rerequested'))
 events.on("check_run:rerequested", checkRequested('check_run:rerequested'))
-events.on("check_run:completed", logEvent)
-events.on("check_suite:completed", logEvent)
+events.on("check_run:completed", checkCompleted)
+events.on("check_suite:completed", checkCompleted)
 
-async function logEvent(e, p) {
+async function checkCompleted(e, p) {
     console.log('event', e)
     console.log('project', p)
     let payload = JSON.parse(e.payload);
@@ -65,25 +65,22 @@ async function logEvent(e, p) {
     if (payload.body.check_run) {
         let run = payload.body.check_run;
         suite = run.check_suite
-        msg = `Check run [${run.name}](${run.html_url}) finished with \`${run.conclusion}\``
+        msg = `[${run.name}](${run.html_url}) on ${run.head_sha} finished with \`${run.conclusion}\``
     } else {
         suite = payload.body.check_suite
         msg = `Check suite [${suite.id}](${suite.url}) finished with \`${suite.conclusion}\``
     }
     console.log('check_suite', suite)
-    let prUrl = suite.pull_requests[0].url
-    let resBody = await gh.get(prUrl, p.secrets.githubToken)
-    let pr = JSON.parse(resBody)
-    console.log('pr', pr)
 
-    await gh.post(pr.comments_url, {body: msg}, p.secrets.githubToken)
+    // Leave comments for check runs only, because check suite events had no useful info like details page urls contained
+    if (payload.body.check_run) {
+        let prUrl = suite.pull_requests[0].url
+        let resBody = await gh.get(prUrl, p.secrets.githubToken)
+        let pr = JSON.parse(resBody)
+        console.log('pr', pr)
 
-    // tmp = payload.body.repository.owner.html_url.split('/')
-    // let owner = tmp[tmp.length - 1]
-    // let repo = payload.body.repository.name;
-    // let issue = payload.body.issue.number;
-    // let ghtoken = p.secrets.githubToken;
-    // await gh.addComment(owner, repo, issue, `Processing ${comment}`, ghtoken)
+        await gh.post(pr.comments_url, {body: msg}, p.secrets.githubToken)
+    }
 }
 
 function checkRequested(id) {
