@@ -14,7 +14,7 @@ async function handleIssueComment(e, p) {
     console.log("payload", payload)
     console.log("owner", payload.body.repository.owner)
 
-    tmp = payload.body.repository.owner.split('/')
+    tmp = payload.body.repository.owner.html_url.split('/')
     let owner = tmp[tmp.length - 1]
     let repo = payload.body.repository.name;
     let issue = payload.body.issue.number;
