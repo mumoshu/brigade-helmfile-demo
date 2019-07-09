@@ -65,6 +65,16 @@ function addComment(org, repo, issue, body, token) {
     })
 }
 
+function get(url, token) {
+    return request(url, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `token ${token}`
+        }
+    })
+}
+
 function checkAuth(token) {
     return request(`https://api.github.com`, {
         method: 'GET',

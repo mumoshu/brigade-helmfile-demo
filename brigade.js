@@ -60,13 +60,17 @@ async function logEvent(e, p) {
     let payload = JSON.parse(e.payload);
     console.log('payload', payload)
     console.log('payload.body', payload.body)
-    console.log('payload.body', payload.body.check_run.check_suite)
+    console.log('p.b.check_run.check_suite', payload.body.check_run.check_suite)
+    let prUrl = payload.body.check_run.check_suite.pull_requests[0].url
+    let resBody = await gh.get(prUrl)
+    let res = JSON.parse(resBody)
+    console.log('res', res)
 
-    tmp = payload.body.repository.owner.html_url.split('/')
-    let owner = tmp[tmp.length - 1]
-    let repo = payload.body.repository.name;
-    let issue = payload.body.issue.number;
-    let ghtoken = p.secrets.githubToken;
+    // tmp = payload.body.repository.owner.html_url.split('/')
+    // let owner = tmp[tmp.length - 1]
+    // let repo = payload.body.repository.name;
+    // let issue = payload.body.issue.number;
+    // let ghtoken = p.secrets.githubToken;
     // await gh.addComment(owner, repo, issue, `Processing ${comment}`, ghtoken)
 }
 
