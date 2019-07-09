@@ -60,8 +60,14 @@ async function logEvent(e, p) {
     let payload = JSON.parse(e.payload);
     console.log('payload', payload)
     console.log('payload.body', payload.body)
-    console.log('p.b.check_run.check_suite', payload.body.check_run.check_suite)
-    let prUrl = payload.body.check_run.check_suite.pull_requests[0].url
+    let suite = undefined
+    if (payload.body.check_run) {
+        suite = payload.body.check_run.check_suite
+    } else {
+        suite = payload.body.check_suite
+    }
+    console.log('check_suite', suite)
+    let prUrl = suite.pull_requests[0].url
     let resBody = await gh.get(prUrl)
     let res = JSON.parse(resBody)
     console.log('res', res)
