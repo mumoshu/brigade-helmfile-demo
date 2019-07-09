@@ -81,7 +81,7 @@ async function run(cmd, e, p) {
     end.env.CHECK_TEXT = result.toString()
     return end.run()
   }).catch( async (err) => {
-    logs = await build.logs()
+    // logs = await build.logs()
     // In this case, we mark the ending failed.
     end.env.CHECK_CONCLUSION = "failure"
     end.env.CHECK_SUMMARY = "Build failed"
