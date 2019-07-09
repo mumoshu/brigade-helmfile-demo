@@ -74,7 +74,7 @@ async function logEvent(e, p) {
     let prUrl = suite.pull_requests[0].url
     let resBody = await gh.get(prUrl, p.secrets.githubToken)
     let pr = JSON.parse(resBody)
-    console.log('res', res)
+    console.log('pr', pr)
 
     await gh.post(pr.comments_url, {body: msg})
 
