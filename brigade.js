@@ -77,14 +77,14 @@ async function run(cmd, e, p) {
   // - Notify GitHub of completion
   //
   // On error, we catch the error and notify GitHub of a failure.
-  start.run().then(() => {
+  return start.run().then(() => {
     return build.run()
   }).then( (result) => {
     end.env.CHECK_CONCLUSION = "success"
     end.env.CHECK_SUMMARY = "Build completed"
     end.env.CHECK_TEXT = result.toString()
     return end.run()
-  }).catch( async (err) => {
+  }).catch( (err) => {
     // logs = await build.logs()
     // In this case, we mark the ending failed.
     end.env.CHECK_CONCLUSION = "failure"

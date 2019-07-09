@@ -39,5 +39,6 @@ releases:
         console.log("hello default script")
       }
       events.on("run", run)
+    vcsSidecar: "brigadecore/git-sidecar:v1.1.0"
     sshKey: |
 {{ readFile (requiredEnv "SSH_KEY") | indent 6 }}
