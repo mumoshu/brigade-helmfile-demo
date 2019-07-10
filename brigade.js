@@ -65,7 +65,15 @@ async function checkCompleted(e, p) {
     if (payload.body.check_run) {
         let run = payload.body.check_run;
         suite = run.check_suite
-        msg = `[${run.name}](${run.html_url}) on ${run.head_sha} finished with \`${run.conclusion}\``
+        let conc = run.conclusion
+        let color
+        // See https://stackoverflow.com/questions/11509830/how-to-add-color-to-githubs-readme-md-file how coloring works
+        if (conc == 'failure') {
+            color = '![#f03c15](https://placehold.it/15/f03c15/000000?text=+)'
+        } else {
+            color = '![#c5f015](https://placehold.it/15/c5f015/000000?text=+)'
+        }
+        msg = `${color} [${run.name}](${run.html_url}) on ${run.head_sha} finished with \`${conc}\``
     } else {
         suite = payload.body.check_suite
         msg = `Check suite [${suite.id}](${suite.url}) finished with \`${suite.conclusion}\``
