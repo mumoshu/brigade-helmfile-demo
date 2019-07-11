@@ -3,7 +3,12 @@ const gh = require("./http")
 
 const dest = "/workspace"
 const image = "mumoshu/helmfile-chatops:0.2.0"
-const commands = ["apply", "diff", "test", "lint"]
+const commands = {
+    apply: 'Apply changes',
+    diff: 'Detect changes',
+    test: 'Run integration tests',
+    lint: 'Run lint checks',
+}
 const checkCommands = ["diff", "lint"]
 const checkPrefix = "brigade"
 
@@ -26,10 +31,11 @@ async function handleIssueComment(e, p) {
 
     // Here we determine if a comment should provoke an action
     if (comment.startsWith("/")) {
-        let command = comment.slice(1).split(' ')[0]
-        if (commands.includes(command)) {
+        let cmd = comment.slice(1).split(' ')[0]
+        let cmds = Object.keys(commands)
+        if (cmds.includes(cmd)) {
             await gh.addComment(owner, repo, issue, `Processing ${comment}`, ghtoken)
-            await runGithubCheckWithHelmfile(command, e, p)
+            await runGithubCheckWithHelmfile(cmd, e, p)
             await gh.addComment(owner, repo, issue, `Finished processing ${comment}`, ghtoken)
             return
         } else {
@@ -109,11 +115,13 @@ async function runGithubCheckWithHelmfile(cmd, e, p) {
     const imageForcePull = false
 
     console.log("check requested")
+    let desc = commands[cmd]
     // Common configuration
     const env = {
         CHECK_PAYLOAD: e.payload,
         CHECK_NAME: `${checkPrefix}-${cmd}`,
-        CHECK_TITLE: "Command",
+        // Shown in PR statuses and headers in check run details
+        CHECK_TITLE: desc,
     }
 
     // This will represent our build job. For us, it's just an empty thinger.
