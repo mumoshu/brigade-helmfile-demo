@@ -1,7 +1,10 @@
 const {events, Job, Group} = require("brigadier")
 const gh = require("./http")
+
 const dest = "/workspace"
 const image = "mumoshu/helmfile-chatops:0.2.0"
+const commands = ["apply", "diff", "test", "lint"]
+const checkCommands = ["diff", "lint"]
 
 async function handleIssueComment(e, p) {
     console.log("handling issue comment....")
@@ -21,18 +24,18 @@ async function handleIssueComment(e, p) {
     let ghtoken = p.secrets.githubToken;
 
     // Here we determine if a comment should provoke an action
-    switch (comment) {
-        case "/apply":
+    if (comment.startsWith("/")) {
+        let command = comment.slice(1).split(' ')[0]
+        if (commands.includes(command)) {
             await gh.addComment(owner, repo, issue, `Processing ${comment}`, ghtoken)
-            await runGithubCheckWithHelmfile("apply", e, p)
+            await runGithubCheckWithHelmfile(command, e, p)
             await gh.addComment(owner, repo, issue, `Finished processing ${comment}`, ghtoken)
-            break
-        default:
-            if (comment.startsWith("/")) {
-                await gh.addComment('mumoshu', repo, issue, `Unsupported command ${comment}`, ghtoken)
-            }
-            console.log(`No applicable action found for comment: ${comment}`);
+            return
+        } else {
+            await gh.addComment('mumoshu', repo, issue, `Unsupported command ${comment}`, ghtoken)
+        }
     }
+    console.log(`No applicable action found for comment: ${comment}`);
 }
 
 events.on("issue_comment:created", handleIssueComment);
@@ -42,7 +45,7 @@ events.on("push", (e, p) => {
     console.log("payload", e.payload)
     var gh = JSON.parse(e.payload)
     if (e.type != "pull_request") {
-        helmfile("apply").run()
+        newJobForCommand("apply").run()
     }
 });
 
@@ -95,7 +98,7 @@ function checkRequested(id) {
     return async (e, p) => {
         payload = JSON.parse(e.payload)
         console.log(`${id}.payload`, payload)
-        return runGithubCheckWithHelmfile("diff", e, p)
+        return await checkCommands.map((c) => runGithubCheckWithHelmfile(c, e, p))
     }
 }
 
@@ -113,7 +116,7 @@ async function runGithubCheckWithHelmfile(cmd, e, p) {
     }
 
     // This will represent our build job. For us, it's just an empty thinger.
-    const build = helmfile(cmd)
+    const build = newJobForCommand(cmd)
     build.streamLogs = true
 
     // For convenience, we'll create three jobs: one for each GitHub Check
@@ -169,7 +172,7 @@ ${logs}`
     return await end.run()
 }
 
-function helmfile(cmd) {
+function newJobForCommand(cmd) {
     var job = new Job(cmd, image)
     job.tasks = [
         "mkdir -p " + dest,
