@@ -5,6 +5,7 @@ const dest = "/workspace"
 const image = "mumoshu/helmfile-chatops:0.2.0"
 const commands = ["apply", "diff", "test", "lint"]
 const checkCommands = ["diff", "lint"]
+const checkPrefix = "brigade"
 
 async function handleIssueComment(e, p) {
     console.log("handling issue comment....")
@@ -111,8 +112,8 @@ async function runGithubCheckWithHelmfile(cmd, e, p) {
     // Common configuration
     const env = {
         CHECK_PAYLOAD: e.payload,
-        CHECK_NAME: `helmfile-${cmd}`,
-        CHECK_TITLE: "Detected Changes",
+        CHECK_NAME: `${checkPrefix}-${cmd}`,
+        CHECK_TITLE: "Command",
     }
 
     // This will represent our build job. For us, it's just an empty thinger.
@@ -121,12 +122,12 @@ async function runGithubCheckWithHelmfile(cmd, e, p) {
 
     // For convenience, we'll create three jobs: one for each GitHub Check
     // stage.
-    const start = new Job("start-run", checkRunImage)
+    const start = new Job(`${cmd}-check-run-start`, checkRunImage)
     start.imageForcePull = imageForcePull
     start.env = env
-    start.env.CHECK_SUMMARY = "Beginning test run"
+    start.env.CHECK_SUMMARY = `${cmd} started`
 
-    const end = new Job("end-run", checkRunImage)
+    const end = new Job(`${cmd}-check-run-end`, checkRunImage)
     end.imageForcePull = imageForcePull
     end.env = env
 
@@ -151,7 +152,7 @@ async function runGithubCheckWithHelmfile(cmd, e, p) {
         let result = await build.run()
 
         end.env.CHECK_CONCLUSION = "success"
-        end.env.CHECK_SUMMARY = "Build completed"
+        end.env.CHECK_SUMMARY = `${cmd}} completed`
         end.env.CHECK_TEXT = result.toString()
     } catch (err) {
         let logs = "N/A"
@@ -163,7 +164,7 @@ async function runGithubCheckWithHelmfile(cmd, e, p) {
 
         // In this case, we mark the ending failed.
         end.env.CHECK_CONCLUSION = "failure"
-        end.env.CHECK_SUMMARY = "Build failed"
+        end.env.CHECK_SUMMARY = `${cmd} failed`
         end.env.CHECK_TEXT = `Error: ${err}
 
 Logs:
