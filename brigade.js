@@ -58,11 +58,22 @@ events.on("push", (e, p) => {
 
 const checkRunImage = "brigadecore/brigade-github-check-run:latest"
 
-events.on("check_suite:requested", checkRequested('check_suite:requested'))
-events.on("check_suite:rerequested", checkRequested('check_suite:rerequested'))
-events.on("check_run:rerequested", checkRequested('check_run:rerequested'))
+events.on("check_suite:requested", checkSuiteRequested('check_suite:requested'))
+events.on("check_suite:rerequested", checkSuiteRequested('check_suite:rerequested'))
+events.on("check_run:rerequested", checkRunReRequested('check_run:rerequested'))
 events.on("check_run:completed", checkCompleted)
 events.on("check_suite:completed", checkCompleted)
+
+function getSuite(payload) {
+    let suite = undefined
+    let body = payload.body
+    if (body.check_run) {
+        suite = body.check_run.check_suite
+    } else {
+        suite = body.check_suite
+    }
+    return suite
+}
 
 async function checkCompleted(e, p) {
     console.log('event', e)
@@ -101,7 +112,7 @@ async function checkCompleted(e, p) {
     }
 }
 
-function checkRequested(id) {
+function checkSuiteRequested(id) {
     return async (e, p) => {
         payload = JSON.parse(e.payload)
         console.log(`${id}.payload`, payload)
@@ -109,9 +120,31 @@ function checkRequested(id) {
     }
 }
 
+function checkRunReRequested(id) {
+    return async (e, p) => {
+        payload = JSON.parse(e.payload)
+        console.log(`${id}.payload`, payload)
+
+        let run = payload.body.check_run
+        let name = run.name;
+        let cmd = name.split(`${checkPrefix}-`)[1]
+
+        console.log(`check run named "${name}" got re-requested, hence running command "${cmd}"`)
+        return await runGithubCheckWithHelmfile(cmd, e, p)
+    }
+}
+
 // runGithubCheckWithHelmfile runs `helmfile ${cmd}` within a GitHub Check, so that its status(success, failure) and logs
 // are visible in the pull request UI.
 async function runGithubCheckWithHelmfile(cmd, e, p) {
+    let payload = JSON.parse(e.payload)
+    let suite = getSuite(payload)
+    let prUrl = suite.pull_requests[0].url
+    let resBody = await gh.get(prUrl, p.secrets.githubToken)
+    let pr = JSON.parse(resBody)
+    let msg = `${cmd} started`
+    let prComment = gh.post(pr.comments_url, {body: msg}, p.secrets.githubToken)
+
     const imageForcePull = false
 
     console.log("check requested")
@@ -146,17 +179,23 @@ async function runGithubCheckWithHelmfile(cmd, e, p) {
         // - Notify GitHub of completion
         //
         // On error, we catch the error and notify GitHub of a failure.
-        let startResult = await start.run()
+        let results = await [
+            prComment,
+            start.run(),
+            // In case you see errors like the below in a helmfile pod:
+            //   Error: secrets is forbidden: User "system:serviceaccount:default:brigade-worker" cannot list resource "secrets" in API group "" in the namespace "kube-system"
+            // It is likely you don't have correct premissions provided to the job pod that runs helmfile.
+            // Run something like the below, for testing purpose:
+            //   kubectl create clusterrolebinding brigade-worker-as-cluster-admin --serviceaccount default:brigade-worker --clusterrole cluster-admin
+            // Hopefully you'll use something stricter in a prod env :)
+            build.run()
+        ]
+
+        let startResult = results[1]
 
         // let check = JSON.parse(startResult.toString())
-        console.log('check', startResult.toString())
+        console.log('check.start.result', startResult.toString())
 
-        // In case you see errors like the below in a helmfile pod:
-        //   Error: secrets is forbidden: User "system:serviceaccount:default:brigade-worker" cannot list resource "secrets" in API group "" in the namespace "kube-system"
-        // It is likely you don't have correct premissions provided to the job pod that runs helmfile.
-        // Run something like the below, for testing purpose:
-        //   kubectl create clusterrolebinding brigade-worker-as-cluster-admin --serviceaccount default:brigade-worker --clusterrole cluster-admin
-        // Hopefully you'll use something stricter in a prod env :)
         let result = await build.run()
 
         end.env.CHECK_CONCLUSION = "success"

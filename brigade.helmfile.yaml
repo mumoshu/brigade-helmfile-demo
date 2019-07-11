@@ -13,6 +13,9 @@ releases:
       enabled: true
     registry: brigadecore
     name: brigade-github-app
+    vacuum:
+      age: "1h"
+      maxBuilds: 50
     brigade-github-app:
       enabled: true
       github:
