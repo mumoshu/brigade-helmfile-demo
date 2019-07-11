@@ -45,24 +45,16 @@ async function handleIssueComment(e, p) {
     console.log(`No applicable action found for comment: ${comment}`);
 }
 
-events.on("issue_comment:created", handleIssueComment);
-
-events.on("push", (e, p) => {
+function handlePush(e, p) {
     console.log("handling push....")
     console.log("payload", e.payload)
     var gh = JSON.parse(e.payload)
     if (e.type != "pull_request") {
         newJobForCommand("apply").run()
     }
-});
+}
 
 const checkRunImage = "brigadecore/brigade-github-check-run:latest"
-
-events.on("check_suite:requested", checkSuiteRequested('check_suite:requested'))
-events.on("check_suite:rerequested", checkSuiteRequested('check_suite:rerequested'))
-events.on("check_run:rerequested", checkRunReRequested('check_run:rerequested'))
-events.on("check_run:completed", checkCompleted)
-events.on("check_suite:completed", checkCompleted)
 
 function getSuite(payload) {
     let suite = undefined
@@ -230,3 +222,11 @@ function newJobForCommand(cmd) {
     ]
     return job
 }
+
+events.on("push", handlePush)
+events.on("issue_comment:created", handleIssueComment);
+events.on("check_suite:requested", checkSuiteRequested('check_suite:requested'))
+events.on("check_suite:rerequested", checkSuiteRequested('check_suite:rerequested'))
+events.on("check_run:rerequested", checkRunReRequested('check_run:rerequested'))
+events.on("check_run:completed", checkCompleted)
+events.on("check_suite:completed", checkCompleted)
