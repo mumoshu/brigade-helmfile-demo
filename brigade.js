@@ -1,6 +1,8 @@
 const {events, Job, Group} = require("brigadier")
 const gh = require("./http")
 
+// Or `make` or whatever you like
+const taskRunner = 'variant'
 const dest = "/workspace"
 const image = "mumoshu/helmfile-chatops:0.2.0"
 const commands = {
@@ -228,7 +230,7 @@ function newJobForCommand(cmd) {
         "mkdir -p " + dest,
         "cp -a /src/* " + dest,
         "cd " + dest,
-        `variant ${cmd}`,
+        `${taskRunner} ${cmd}`,
     ]
     return job
 }
