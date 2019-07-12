@@ -119,7 +119,7 @@ function checkSuiteRequested(id) {
     return async (e, p) => {
         payload = JSON.parse(e.payload)
         console.log(`${id}.payload`, payload)
-        return await checkCommands.map((c) => runGithubCheckWithHelmfile(c, e, p))
+        return await Promise.all(checkCommands.map((c) => runGithubCheckWithHelmfile(c, e, p)))
     }
 }
 
