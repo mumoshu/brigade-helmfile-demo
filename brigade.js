@@ -67,6 +67,17 @@ function getSuite(payload) {
     return suite
 }
 
+function getPR(payload) {
+    let pr
+    let suite = getSuite(payload)
+    if (suite) {
+        pr = suite.pull_requests[0]
+    } else {
+        pr = payload.body.issue.pull_request
+    }
+    return pr
+}
+
 async function checkCompleted(e, p) {
     console.log('event', e)
     console.log('project', p)
@@ -130,9 +141,8 @@ function checkRunReRequested(id) {
 // are visible in the pull request UI.
 async function runGithubCheckWithHelmfile(cmd, e, p) {
     let payload = JSON.parse(e.payload)
-    let suite = getSuite(payload)
-    let prUrl = suite.pull_requests[0].url
-    let resBody = await gh.get(prUrl, p.secrets.githubToken)
+    let prSummary = getPR(payload)
+    let resBody = await gh.get(prSummary.url, p.secrets.githubToken)
     let pr = JSON.parse(resBody)
     let msg = `${cmd} started`
     let prComment = gh.post(pr.comments_url, {body: msg}, p.secrets.githubToken)

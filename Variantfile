@@ -20,6 +20,10 @@ tasks:
       helm init --client-only
       helm tiller run -- helmfile diff --suppress-secrets --detailed-exitcode
 
+  destroy:
+    script: |
+      helm tiller run -- helmfile destroy
+
   polaris:
     description: |
       Open polaris dashboard in your browser
@@ -46,6 +50,6 @@ tasks:
 
   image:
     script: |
-      image_tag=mumoshu/helmfile-chatops:0.2.0
+      image_tag=mumoshu/helmfile-chatops:0.2.1
       docker build -t $image_tag .
       docker push $image_tag
