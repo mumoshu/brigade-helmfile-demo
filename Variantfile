@@ -20,6 +20,11 @@ tasks:
       helm init --client-only
       helm tiller run -- helmfile diff --suppress-secrets --detailed-exitcode
 
+  lint:
+    script: |
+      helm init --client-only
+      helm tiller run -- helmfile lint
+
   destroy:
     script: |
       helm tiller run -- helmfile destroy
