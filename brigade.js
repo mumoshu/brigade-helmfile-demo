@@ -198,7 +198,7 @@ async function runGithubCheckWithHelmfile(cmd, e, p) {
         // let check = JSON.parse(startResult.toString())
         console.log('check.start.result', startResult.toString())
 
-        let result = await build.run()
+        let result = results[2]
 
         end.env.CHECK_CONCLUSION = "success"
         end.env.CHECK_SUMMARY = `${cmd}} completed`
