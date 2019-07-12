@@ -235,7 +235,11 @@ function newJobForCommand(cmd) {
 
 events.on("push", handlePush)
 events.on("issue_comment:created", handleIssueComment);
-events.on("check_suite:requested", checkSuiteRequested('check_suite:requested'))
+// `check_suite:requested` seems to be triggered out of the band of brigade-github-app on every push to a pull request.
+// On the other hand brigade-github-app triggers check_suite:rerequested on every push to a pull request
+// This results in two consecutive and duplicate check suite runs on every push to a pull request
+// We disable the GitHub native one here so that we don't end duplicate runs.
+//events.on("check_suite:requested", checkSuiteRequested('check_suite:requested'))
 events.on("check_suite:rerequested", checkSuiteRequested('check_suite:rerequested'))
 events.on("check_run:rerequested", checkRunReRequested('check_run:rerequested'))
 events.on("check_run:completed", checkCompleted)
