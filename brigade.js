@@ -181,7 +181,7 @@ async function runGithubCheckWithHelmfile(cmd, e, p) {
         // - Notify GitHub of completion
         //
         // On error, we catch the error and notify GitHub of a failure.
-        let results = await [
+        let results = await Promise.all([
             prComment,
             start.run(),
             // In case you see errors like the below in a helmfile pod:
@@ -191,7 +191,7 @@ async function runGithubCheckWithHelmfile(cmd, e, p) {
             //   kubectl create clusterrolebinding brigade-worker-as-cluster-admin --serviceaccount default:brigade-worker --clusterrole cluster-admin
             // Hopefully you'll use something stricter in a prod env :)
             build.run()
-        ]
+        ])
 
         let startResult = results[1]
 
