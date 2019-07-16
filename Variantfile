@@ -7,15 +7,27 @@ tasks:
 
   sync:
     script: |
-      helmfile sync
+      helm init --client-only
+      helm tiller run -- helmfile sync
 
   apply:
     script: |
-      helmfile apply --suppress-secrets
+      helm init --client-only
+      helm tiller run -- helmfile apply --suppress-secrets
 
   diff:
     script: |
-      helmfile diff --suppress-secrets --detailed-exitcode
+      helm init --client-only
+      helm tiller run -- helmfile diff --suppress-secrets --detailed-exitcode
+
+  lint:
+    script: |
+      helm init --client-only
+      helm tiller run -- helmfile lint
+
+  destroy:
+    script: |
+      helm tiller run -- helmfile destroy
 
   polaris:
     description: |
@@ -43,6 +55,6 @@ tasks:
 
   image:
     script: |
-      image_tag=mumoshu/helmfile-chatops:0.1.0
+      image_tag=mumoshu/helmfile-chatops:0.2.1
       docker build -t $image_tag .
       docker push $image_tag
