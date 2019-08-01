@@ -14,6 +14,14 @@ const commands = {
 const checkCommands = ["diff", "lint"]
 const checkPrefix = "brigade"
 
+async function handleReleaseSet(e, p) {
+    console.log("handling releasetset....")
+    payload = JSON.parse(e.payload);
+
+    console.log("project", p)
+    console.log("payload", payload)
+}
+
 async function handleIssueComment(e, p) {
     console.log("handling issue comment....")
     payload = JSON.parse(e.payload);
@@ -246,3 +254,4 @@ events.on("check_suite:rerequested", checkSuiteRequested('check_suite:rerequeste
 events.on("check_run:rerequested", checkRunReRequested('check_run:rerequested'))
 events.on("check_run:completed", checkCompleted)
 events.on("check_suite:completed", checkCompleted)
+events.on("releaseset:update", handleReleaseSet)
