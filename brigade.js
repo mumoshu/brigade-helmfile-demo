@@ -20,6 +20,10 @@ async function handleReleaseSet(e, p) {
 
     console.log("project", p)
     console.log("payload", payload)
+
+    let body = payload.body
+    annotations = body.metadata.annotations
+    console.log("annotations", annotations)
 }
 
 async function handleIssueComment(e, p) {
