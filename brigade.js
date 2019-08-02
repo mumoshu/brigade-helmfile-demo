@@ -24,6 +24,18 @@ async function handleReleaseSet(e, p) {
     let body = payload.body
     annotations = body.metadata.annotations
     console.log("annotations", annotations)
+
+    pulID = annotations["cd.brigade.sh/github-pull-id"]
+    // Send feedback comments to the pull request with the pullID
+    let resBody = await gh.get(`https://api.github.com/repos/${p.repo}/pulls/${pullID}`, p.secrets.githubToken)
+    let pr = JSON.parse(resBody)
+
+    approved = annotations["cd.brigade.sh/approved"]
+    if (approved == "true" || approved == "yes") {
+        return await checkWithHelmfile("apply", pr, payload)
+    } else {
+        return await checkWithHelmfile("diff", pr, payload)
+    }
 }
 
 async function handleIssueComment(e, p) {
@@ -70,7 +82,7 @@ function handlePush(e, p) {
 
 const checkRunImage = "brigadecore/brigade-github-check-run:latest"
 
-function getSuite(payload) {
+function getSuiteFromPayload(payload) {
     let suite = undefined
     let body = payload.body
     if (body.check_run) {
@@ -81,9 +93,9 @@ function getSuite(payload) {
     return suite
 }
 
-function getPR(payload) {
+function getPRFromPayload(payload) {
     let pr
-    let suite = getSuite(payload)
+    let suite = getSuiteFromPayload(payload)
     if (suite) {
         pr = suite.pull_requests[0]
     } else {
@@ -155,9 +167,14 @@ function checkRunReRequested(id) {
 // are visible in the pull request UI.
 async function runGithubCheckWithHelmfile(cmd, e, p) {
     let payload = JSON.parse(e.payload)
-    let prSummary = getPR(payload)
+    let prSummary = getPRFromPayload(payload)
     let resBody = await gh.get(prSummary.url, p.secrets.githubToken)
     let pr = JSON.parse(resBody)
+
+    return await checkWithHelmfile(cmd, pr, payload, p)
+}
+
+async function checkWithHelmfile(cmd, pr, payload, p) {
     let msg = `${cmd} started`
     let prComment = gh.post(pr.comments_url, {body: msg}, p.secrets.githubToken)
 
@@ -167,7 +184,7 @@ async function runGithubCheckWithHelmfile(cmd, e, p) {
     let desc = commands[cmd]
     // Common configuration
     const env = {
-        CHECK_PAYLOAD: e.payload,
+        CHECK_PAYLOAD: payload,
         CHECK_NAME: `${checkPrefix}-${cmd}`,
         // Shown in PR statuses and headers in check run details
         CHECK_TITLE: desc,
