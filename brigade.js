@@ -36,7 +36,7 @@ function handleReleaseSet(action) {
         function newCheckRunStart() {
             return {
                 name: `brigade-cd-${payload.type}-${action}`,
-                head_branch: payload.branch,
+                // head_branch: payload.branch,
                 head_sha: payload.commit,
                 // or "success", "failure"
                 // conclusion: "",
@@ -47,7 +47,7 @@ function handleReleaseSet(action) {
                 started_at: new Date().toISOString(),
                 // completed_at: null,
                 // output: null,
-                actions: []
+                // actions: []
             }
         }
 
@@ -105,7 +105,7 @@ function handleReleaseSet(action) {
             // let logs = await gatherLogs(build)
             let text = `Logs:
 ${result.toString()}`
-            let r = newCheckRunEnd("success", "Result", `${action} succeeded`, text);
+            let r = newCheckRunEnd("success", "Result", `${action} succeeded`, text)
             await gh.createCheckRun(payload.owner, payload.repo, r, token)
         } catch (err) {
             let logs = await gatherLogs(build)
@@ -113,7 +113,7 @@ ${result.toString()}`
 
 Logs:
 ${logs}`
-            let r = newCheckRunEnd("failure", "Result", `${action} failed`, text);
+            let r = newCheckRunEnd("failure", "Result", `${action} failed`, text)
             await gh.createCheckRun(payload.owner, payload.repo, r, token)
         }
         await gh.addComment(payload.owner, payload.repo, payload.pull, `Finished processing ${action}`, ghtoken)
