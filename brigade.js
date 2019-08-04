@@ -57,18 +57,22 @@ function handleReleaseSet(action) {
             run['output'] = {
                 'title': title,
                 'summary': summary,
-                // 'text': text
+                'text': text
             }
             run['conclusion'] = conclusion
             return run
         }
 
         async function gatherLogs(build) {
+            let logLen = 1000
             let logs = "N/A"
             try {
                 logs = await build.logs()
             } catch (err2) {
                 console.log("failed while gathering logs", err2)
+            }
+            if (logs.length > logLen) {
+                logs = logs.slice(logLen)
             }
             return logs
         }
