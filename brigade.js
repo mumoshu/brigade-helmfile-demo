@@ -27,7 +27,8 @@ function handleReleaseSet(action) {
         console.log("annotations", annotations)
 
         // Send feedback comments to the pull request with the pullID
-        let resBody = await gh.get(payload.pullURL, p.secrets.githubToken)
+        let ghtoken = p.secrets.githubToken;
+        let resBody = await gh.get(payload.pullURL, ghtoken)
         let pr = JSON.parse(resBody)
 
         await gh.addComment(payload.owner, payload.repo, payload.pull, `Processing ${action}`, ghtoken)
