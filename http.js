@@ -85,7 +85,7 @@ function post(url, params, token) {
     })
 }
 
-function createCheckRun(owner, repo, params) {
+function createCheckRun(owner, repo, params, token) {
     return request(`https://api.github.com/repos/${owner}/${repo}/check-runs`, {
         method: 'POST',
         headers: {

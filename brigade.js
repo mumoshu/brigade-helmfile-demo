@@ -31,6 +31,8 @@ function handleReleaseSet(action) {
         let resBody = await gh.get(payload.pullURL, ghtoken)
         let pr = JSON.parse(resBody)
 
+        let token = payload.token
+
         function newCheckRunStart() {
             return {
                 name: `brigade-cd-${payload.type}-${action}`,
@@ -70,7 +72,7 @@ function handleReleaseSet(action) {
         }
 
         await gh.addComment(payload.owner, payload.repo, payload.pull, `Processing ${action}`, ghtoken)
-        await gh.createCheckRun(payload.owner, payload.repo, run)
+        await gh.createCheckRun(payload.owner, payload.repo, run, token)
         let build = null
         switch (action) {
             case "plan":
@@ -96,11 +98,11 @@ function handleReleaseSet(action) {
             } catch (err2) {
                 console.log("failed while gathering logs", {cmd: cmd}, err2)
             }
-            await gh.createCheckRun(payload.owner, payload.repo, newCheckRunEnd("success", "Result", `${action} succeeded`, logs))
+            await gh.createCheckRun(payload.owner, payload.repo, newCheckRunEnd("success", "Result", `${action} succeeded`, logs), token)
         } catch (err) {
-            await gh.createCheckRun(payload.owner, payload.repo, newCheckRunEnd("failure", "Result", `${action} succeeded`, logs))
+            await gh.createCheckRun(payload.owner, payload.repo, newCheckRunEnd("failure", "Result", `${action} succeeded`, logs), token)
         }
-        await gh.addComment(payload.owner, payload.repo, payload.pull, `Finished processing ${action}`, action)
+        await gh.addComment(payload.owner, payload.repo, payload.pull, `Finished processing ${action}`, ghtoken)
     }
 }
 
