@@ -21,9 +21,9 @@ const request = function (urlstr, options) {
         params = options.parameters
         delete options.parameters
         if (params) {
-            body = JSON.stringify(params)
-            options.headers['Content-Length'] = body.length
-            console.log('http.request.body1', body)
+            reqbody = JSON.stringify(params)
+            options.headers['Content-Length'] = reqbody.length
+            console.log('http.request.body1', reqbody)
         }
         console.log('http.request.options', options)
         const request = lib.request(options, (response) => {
@@ -47,7 +47,7 @@ const request = function (urlstr, options) {
         // handle connection errors of the request
         request.on('error', (err) => reject(err))
         if (params) {
-            request.write(body)
+            request.write(reqbody)
         }
         request.end()
     })
