@@ -57,7 +57,7 @@ function handleReleaseSet(action) {
             run['output'] = {
                 'title': title,
                 'summary': summary,
-                'text': text
+                // 'text': text
             }
             run['conclusion'] = conclusion
             return run
