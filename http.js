@@ -24,7 +24,7 @@ const request = function (urlstr, options) {
         if (params) {
             reqbody = JSON.stringify(params)
             options.headers['Content-Length'] = reqbody.length
-            , params)
+            console.log('http.request.params', params)
         }
         console.log('http.request.options', options)
         const request = lib.request(options, (response) => {
