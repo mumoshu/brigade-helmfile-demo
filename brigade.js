@@ -32,11 +32,11 @@ function handleReleaseSet(action) {
 
         switch (action) {
             case "plan":
-                return await checkWithHelmfile("diff", pr, payload)
+                return await checkWithHelmfile("diff", pr, payload, p)
             case "apply":
-                return await checkWithHelmfile("apply", pr, payload)
+                return await checkWithHelmfile("apply", pr, payload, p)
             case "destroy":
-                return await checkWithHelmfile("destroy", pr, payload)
+                return await checkWithHelmfile("destroy", pr, payload, p)
         }
     }
 }
@@ -178,6 +178,7 @@ async function runGithubCheckWithHelmfile(cmd, e, p) {
 }
 
 async function checkWithHelmfile(cmd, pr, payload, p) {
+    console.log("checkWithHelmfile().p", p)
     let msg = `${cmd} started`
     let prComment = gh.post(pr.comments_url, {body: msg}, p.secrets.githubToken)
 
