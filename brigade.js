@@ -39,14 +39,14 @@ function handleReleaseSet(action) {
                 head_branch: payload.branch,
                 head_sha: payload.commit,
                 // or "success", "failure"
-                conclusion: "",
-                details_url: "",
-                external_id: "",
+                // conclusion: "",
+                // details_url: "",
+                // external_id: "",
                 // or "completed"
                 status: "in_progress",
                 started_at: new Date().toISOString(),
-                completed_at: null,
-                output: null,
+                // completed_at: null,
+                // output: null,
                 actions: []
             }
         }
