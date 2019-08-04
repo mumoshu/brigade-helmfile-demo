@@ -14,27 +14,30 @@ const commands = {
 const checkCommands = ["diff", "lint"]
 const checkPrefix = "brigade"
 
-async function handleReleaseSet(e, p) {
-    console.log("handling releasetset....")
-    payload = JSON.parse(e.payload);
+function handleReleaseSet(action) {
+    return async function (e, p) {
+        console.log("handling releasetset....")
+        payload = JSON.parse(e.payload);
 
-    console.log("project", p)
-    console.log("payload", payload)
+        console.log("project", p)
+        console.log("payload", payload)
 
-    let body = payload.body
-    annotations = body.metadata.annotations
-    console.log("annotations", annotations)
+        let body = payload.body
+        annotations = body.metadata.annotations
+        console.log("annotations", annotations)
 
-    pulID = annotations["cd.brigade.sh/github-pull-id"]
-    // Send feedback comments to the pull request with the pullID
-    let resBody = await gh.get(`https://api.github.com/repos/${p.repo}/pulls/${pullID}`, p.secrets.githubToken)
-    let pr = JSON.parse(resBody)
+        // Send feedback comments to the pull request with the pullID
+        let resBody = await gh.get(payload.PullURL, p.secrets.githubToken)
+        let pr = JSON.parse(resBody)
 
-    approved = annotations["cd.brigade.sh/approved"]
-    if (approved == "true" || approved == "yes") {
-        return await checkWithHelmfile("apply", pr, payload)
-    } else {
-        return await checkWithHelmfile("diff", pr, payload)
+        switch (action) {
+            case "plan":
+                return await checkWithHelmfile("diff", pr, payload)
+            case "apply":
+                return await checkWithHelmfile("apply", pr, payload)
+            case "destroy":
+                return await checkWithHelmfile("destroy", pr, payload)
+        }
     }
 }
 
@@ -275,4 +278,6 @@ events.on("check_suite:rerequested", checkSuiteRequested('check_suite:rerequeste
 events.on("check_run:rerequested", checkRunReRequested('check_run:rerequested'))
 events.on("check_run:completed", checkCompleted)
 events.on("check_suite:completed", checkCompleted)
-events.on("releaseset:update", handleReleaseSet)
+events.on("releaseset:apply", handleReleaseSet("apply"))
+events.on("releaseset:plan", handleReleaseSet("plan"))
+events.on("releaseset:destroy", handleReleaseSet("destroy"))
