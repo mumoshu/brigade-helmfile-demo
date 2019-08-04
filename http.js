@@ -20,6 +20,7 @@ const request = function (urlstr, options) {
         options.headers['User-Agent'] = 'Brigade-Worker'
         params = options.parameters
         delete options.parameters
+        let body
         if (params) {
             body = JSON.stringify(params)
             options.headers['Content-Length'] = body.length
