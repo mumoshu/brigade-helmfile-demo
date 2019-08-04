@@ -30,7 +30,7 @@ function handleReleaseSet(action) {
         let resBody = await gh.get(payload.pullURL, p.secrets.githubToken)
         let pr = JSON.parse(resBody)
 
-        await gh.addComment(owner, repo, issue, `Processing ${action}`, ghtoken)
+        await gh.addComment(payload.owner, payload.repo, payload.pull, `Processing ${action}`, ghtoken)
         switch (action) {
             case "plan":
                 await checkWithHelmfile("diff", pr, e.payload, p)
@@ -42,7 +42,7 @@ function handleReleaseSet(action) {
                 await checkWithHelmfile("destroy", pr, e.payload, p)
                 break
         }
-        await gh.addComment(owner, repo, issue, `Finished processing ${action}`, action)
+        await gh.addComment(payload.owner, payload.repo, payload.pull, `Finished processing ${action}`, action)
     }
 }
 
