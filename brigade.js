@@ -16,7 +16,7 @@ const checkPrefix = "brigade"
 
 function handleReleaseSet(action) {
     return async (e, p) => {
-        console.log("handling releasetset....")
+        console.log("handling releaseset....")
         payload = JSON.parse(e.payload);
 
         console.log("project", p)
@@ -30,14 +30,19 @@ function handleReleaseSet(action) {
         let resBody = await gh.get(payload.pullURL, p.secrets.githubToken)
         let pr = JSON.parse(resBody)
 
+        await gh.addComment(owner, repo, issue, `Processing ${action}`, ghtoken)
         switch (action) {
             case "plan":
-                return await checkWithHelmfile("diff", pr, payload, p)
+                await checkWithHelmfile("diff", pr, e.payload, p)
+                break
             case "apply":
-                return await checkWithHelmfile("apply", pr, payload, p)
+                await checkWithHelmfile("apply", pr, e.payload, p)
+                break
             case "destroy":
-                return await checkWithHelmfile("destroy", pr, payload, p)
+                await checkWithHelmfile("destroy", pr, e.payload, p)
+                break
         }
+        await gh.addComment(owner, repo, issue, `Finished processing ${action}`, action)
     }
 }
 
@@ -174,7 +179,7 @@ async function runGithubCheckWithHelmfile(cmd, e, p) {
     let resBody = await gh.get(prSummary.url, p.secrets.githubToken)
     let pr = JSON.parse(resBody)
 
-    return await checkWithHelmfile(cmd, pr, payload, p)
+    return await checkWithHelmfile(cmd, pr, e.payload, p)
 }
 
 async function checkWithHelmfile(cmd, pr, payload, p) {
