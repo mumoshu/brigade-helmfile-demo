@@ -103,10 +103,12 @@ function handleReleaseSet(action) {
         try {
             await build.run()
             let logs = await gatherLogs(build)
-            await gh.createCheckRun(payload.owner, payload.repo, newCheckRunEnd("success", "Result", `${action} succeeded`, logs), token)
+            let r = newCheckRunEnd("success", "Result", `${action} succeeded`, logs);
+            await gh.createCheckRun(payload.owner, payload.repo, r, token)
         } catch (err) {
             let logs = await gatherLogs(build)
-            await gh.createCheckRun(payload.owner, payload.repo, newCheckRunEnd("failure", "Result", `${action} failed`, logs), token)
+            let r = newCheckRunEnd("failure", "Result", `${action} failed`, logs);
+            await gh.createCheckRun(payload.owner, payload.repo, r, token)
         }
         await gh.addComment(payload.owner, payload.repo, payload.pull, `Finished processing ${action}`, ghtoken)
     }
