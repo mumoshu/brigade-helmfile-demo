@@ -63,6 +63,16 @@ function handleReleaseSet(action) {
             return run
         }
 
+        async function gatherLogs(build) {
+            let logs = "N/A"
+            try {
+                logs = await build.logs()
+            } catch (err2) {
+                console.log("failed while gathering logs", err2)
+            }
+            return logs
+        }
+
         let run = newCheckRunStart()
 
         async function doHelmfile(cmd) {
@@ -92,14 +102,10 @@ function handleReleaseSet(action) {
         }
         try {
             await build.run()
-            let logs = "N/A"
-            try {
-                logs = await build.logs()
-            } catch (err2) {
-                console.log("failed while gathering logs", {cmd: cmd}, err2)
-            }
+            let logs = await gatherLogs(build)
             await gh.createCheckRun(payload.owner, payload.repo, newCheckRunEnd("success", "Result", `${action} succeeded`, logs), token)
         } catch (err) {
+            let logs = await gatherLogs(build)
             await gh.createCheckRun(payload.owner, payload.repo, newCheckRunEnd("failure", "Result", `${action} succeeded`, logs), token)
         }
         await gh.addComment(payload.owner, payload.repo, payload.pull, `Finished processing ${action}`, ghtoken)
