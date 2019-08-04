@@ -15,7 +15,7 @@ const checkCommands = ["diff", "lint"]
 const checkPrefix = "brigade"
 
 function handleReleaseSet(action) {
-    return async function (e, p) {
+    return async (e, p) => {
         console.log("handling releasetset....")
         payload = JSON.parse(e.payload);
 
@@ -27,7 +27,7 @@ function handleReleaseSet(action) {
         console.log("annotations", annotations)
 
         // Send feedback comments to the pull request with the pullID
-        let resBody = await gh.get(payload.PullURL, p.secrets.githubToken)
+        let resBody = await gh.get(payload.pullURL, p.secrets.githubToken)
         let pr = JSON.parse(resBody)
 
         switch (action) {
