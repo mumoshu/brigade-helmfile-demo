@@ -35,16 +35,16 @@ function handleReleaseSet(action) {
 
         function newCheckRunStart() {
             return {
-                name: `brigade-cd-${payload.type}-${action}`,
+                'name': `brigade-cd-${payload.type}-${action}`,
                 // head_branch: payload.branch,
-                head_sha: payload.commit,
+                'head_sha': payload.commit,
                 // or "success", "failure"
                 // conclusion: "",
                 // details_url: "",
                 // external_id: "",
                 // or "completed"
-                status: "in_progress",
-                started_at: new Date().toISOString(),
+                'status': "in_progress",
+                'started_at': new Date().toISOString(),
                 // completed_at: null,
                 // output: null,
                 // actions: []
@@ -53,13 +53,13 @@ function handleReleaseSet(action) {
 
         function newCheckRunEnd(conclusion, title, summary, text) {
             let run = newCheckRunStart()
-            run.completed_at = new Date().toISOString()
-            run.output = {
-                title: title,
-                summary: summary,
-                text: text
+            run['completed_at'] = new Date().toISOString()
+            run['output'] = {
+                'title': title,
+                'summary': summary,
+                'text': text
             }
-            run.conclusion = conclusion
+            run['conclusion'] = conclusion
             return run
         }
 
