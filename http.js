@@ -24,7 +24,7 @@ const request = function (urlstr, options) {
         if (params) {
             body = JSON.stringify(params)
             options.headers['Content-Length'] = body.length
-            console.log('http.request.body', body)
+            console.log('http.request.body1', body)
         }
         const request = lib.request(options, (response) => {
             console.log('http.response', { status: `${response.statusCode}`, headers: JSON.stringify(response.headers) });
