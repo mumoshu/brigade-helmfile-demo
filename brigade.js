@@ -75,7 +75,7 @@ function handleReleaseSet(action) {
 
         let run = newCheckRunStart()
 
-        async function doHelmfile(cmd) {
+        function doHelmfile(cmd) {
             let build = newJobForCommand(cmd)
             build.streamLogs = true
             return build
@@ -106,7 +106,7 @@ function handleReleaseSet(action) {
             await gh.createCheckRun(payload.owner, payload.repo, newCheckRunEnd("success", "Result", `${action} succeeded`, logs), token)
         } catch (err) {
             let logs = await gatherLogs(build)
-            await gh.createCheckRun(payload.owner, payload.repo, newCheckRunEnd("failure", "Result", `${action} succeeded`, logs), token)
+            await gh.createCheckRun(payload.owner, payload.repo, newCheckRunEnd("failure", "Result", `${action} failed`, logs), token)
         }
         await gh.addComment(payload.owner, payload.repo, payload.pull, `Finished processing ${action}`, ghtoken)
     }
