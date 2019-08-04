@@ -31,17 +31,74 @@ function handleReleaseSet(action) {
         let resBody = await gh.get(payload.pullURL, ghtoken)
         let pr = JSON.parse(resBody)
 
+        function newCheckRunStart() {
+            return {
+                name: `brigade-cd-${payload.type}-${action}`,
+                head_branch: payload.branch,
+                head_sha: payload.commit,
+                // or "success", "failure"
+                conclusion: "",
+                details_url: "",
+                external_id: "",
+                // or "completed"
+                status: "in_progress",
+                started_at: new Date().toISOString(),
+                completed_at: null,
+                output: null,
+                actions: []
+            }
+        }
+
+        function newCheckRunEnd(conclusion, title, summary, text) {
+            let run = newCheckRunStart()
+            run.completed_at = new Date().toISOString()
+            run.output = {
+                title: title,
+                summary: summary,
+                text: text
+            }
+            run.conclusion = conclusion
+            return run
+        }
+
+        let run = newCheckRunStart()
+
+        async function doHelmfile(cmd) {
+            let build = newJobForCommand(cmd)
+            build.streamLogs = true
+            return build
+        }
+
         await gh.addComment(payload.owner, payload.repo, payload.pull, `Processing ${action}`, ghtoken)
+        await gh.createCheckRun(payload.owner, payload.repo, run)
+        let build = null
         switch (action) {
             case "plan":
-                await checkWithHelmfile("diff", pr, e.payload, p)
+                // We have no way to run use the brigade's built-in check-run container to create/update check runs for payloads sent from brigade-cd
+                // await checkWithHelmfile("diff", pr, e.payload, p)
+                build = doHelmfile("diff")
                 break
             case "apply":
-                await checkWithHelmfile("apply", pr, e.payload, p)
+                build = doHelmfile("apply")
                 break
             case "destroy":
-                await checkWithHelmfile("destroy", pr, e.payload, p)
+                build = doHelmfile("destroy")
                 break
+            default:
+                await gh.addComment(payload.owner, repo, payload.pull, `Unsupported command ${action}`, ghtoken)
+                break
+        }
+        try {
+            await build.run()
+            let logs = "N/A"
+            try {
+                logs = await build.logs()
+            } catch (err2) {
+                console.log("failed while gathering logs", {cmd: cmd}, err2)
+            }
+            await gh.createCheckRun(payload.owner, payload.repo, newCheckRunEnd("success", "Result", `${action} succeeded`, logs))
+        } catch (err) {
+            await gh.createCheckRun(payload.owner, payload.repo, newCheckRunEnd("failure", "Result", `${action} succeeded`, logs))
         }
         await gh.addComment(payload.owner, payload.repo, payload.pull, `Finished processing ${action}`, action)
     }

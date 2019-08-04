@@ -85,6 +85,18 @@ function post(url, params, token) {
     })
 }
 
+function createCheckRun(owner, repo, params) {
+    return request(`https://api.github.com/repos/${owner}/${repo}/check-runs`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `token ${token}`,
+            'Accept': `application/vnd.github.antiope-preview+json`
+        },
+        parameters: params,
+    })
+}
+
 function checkAuth(token) {
     return request(`https://api.github.com`, {
         method: 'GET',
@@ -96,5 +108,6 @@ function checkAuth(token) {
 }
 
 module.exports.addComment = addComment
+module.exports.createCheckRun = createCheckRun
 module.exports.get = get
 module.exports.post = post
