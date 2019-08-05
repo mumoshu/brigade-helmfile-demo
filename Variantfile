@@ -58,3 +58,12 @@ tasks:
       image_tag=mumoshu/helmfile-chatops:0.2.1
       docker build -t $image_tag .
       docker push $image_tag
+
+  gitips:
+    tasks:
+      init:
+        script: |
+          git checkout —orphan gitops
+          git commit --allow-empty -m "first commit"
+          git push origin gitops
+

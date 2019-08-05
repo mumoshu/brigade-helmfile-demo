@@ -27,3 +27,8 @@ releases:
       # See https://github.com/fluxcd/flux/issues/2046#issuecomment-492152108
       # See https://github.com/fluxcd/flux/tree/master/chart/flux#configuration
       secretName: {{ $fluxSecretName }}
+    memcached:
+      securityContext:
+        runAsUser: null
+        runAsGroup: null
+        allowPrivilegeEscalation: false
