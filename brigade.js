@@ -85,6 +85,10 @@ function handleReleaseSet(action) {
             return build
         }
 
+        function lastLines(text, n) {
+            return text.split("\n").slice(-1 - n,-1).join("\n") + "\n"
+        }
+
         await gh.addComment(payload.owner, payload.repo, payload.pull, `Processing ${action}`, ghtoken)
         await gh.createCheckRun(payload.owner, payload.repo, run, token)
         let build = null
@@ -117,7 +121,7 @@ ${result.toString()}`
 
 Logs:
 ${logs}`
-            let r = newCheckRunEnd("failure", "Result", `${action} failed`, text)
+            let r = newCheckRunEnd("failure", "Result", `${action} failed\\n\\n${lastLines(text, 10)}`, text)
             await gh.createCheckRun(payload.owner, payload.repo, r, token)
         }
         await gh.addComment(payload.owner, payload.repo, payload.pull, `Finished processing ${action}`, ghtoken)
