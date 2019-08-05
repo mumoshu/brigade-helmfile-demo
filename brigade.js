@@ -64,7 +64,7 @@ function handleReleaseSet(action) {
         }
 
         async function gatherLogs(build) {
-            let logLen = 1000
+            let logLen = 102400
             let logs = "N/A"
             try {
                 logs = await build.logs()

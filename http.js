@@ -23,7 +23,8 @@ const request = function (urlstr, options) {
         let reqbody = ''
         if (params) {
             reqbody = JSON.stringify(params)
-            options.headers['Content-Length'] = reqbody.length
+            options.headers['Content-Length'] = Buffer.byteLength(reqbody)
+
             console.log('http.request.params', params)
         }
         console.log('http.request.options', options)
