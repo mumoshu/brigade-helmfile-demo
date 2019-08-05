@@ -1,6 +1,7 @@
 helmfiles:
 - istio-init.helmfile.yaml
 - istio.yaml
+- helmfile.d/flux.yaml
 - flagger.helmfile.yaml
 - brigade.helmfile.yaml
 
