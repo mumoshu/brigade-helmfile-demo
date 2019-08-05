@@ -1,0 +1,28 @@
+apiVersion: helmfile.helm.sh/v1alpha1
+kind: ReleaseSet
+metadata:
+  name: myapp
+  annotations:
+    approved: "yes"
+    # The pull request to which feedback messages from brigade.js are sent back
+    cd.brigade.sh/github-pull-id: "3"
+    # The GitHub App's Installation ID used by the brigade-cd gateway to authenticate against GitHub and obtain the token
+    # which is passed to brigade.js
+    cd.brigade.sh/github-app-inst-id: "1247339"
+    # The Git repository that contains all the external files referenced from within this ReleaseSet
+    cd.brigade.sh/git-repo: "mumoshu/demo-78a64c769a615eb776"
+    # The commit ID that contains all the external files referenced from within this ReleaseSet
+    cd.brigade.sh/git-commit: "90d8e1633bbc469b0a3676389e6c068526822d46"
+    # The Git branch that contains the commit
+    cd.brigade.sh/git-branch: "test"
+    # The directory in the Git commit that contains all the external files referenced from within this ReleaseSet
+    cd.brigade.sh/dir: "."
+spec:
+  foo: bar
+  values:
+    k1: v2
+  releases:
+  - name: myapp
+    chart: charts/mychart
+  finalizers:
+    - finalizer.helmfile.helm.sh
