@@ -1,0 +1,29 @@
+repositories:
+- name: fluxcd
+  url: https://fluxcd.github.io/flux
+- name: incubator
+  url: https://kubernetes-charts-incubator.storage.googleapis.com
+
+{{ $fluxSecretName := "flux-git-key" }}
+releases:
+- name: flux-git-key
+  chart: incubator/raw
+  values:
+  - resources:
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: {{ $fluxSecretName }}
+      stringData:
+        mykey: |
+{{ readFile (requiredEnv "SSH_KEY") | indent 10 }}
+- name: flux
+  chart: fluxcd/flux
+  # namespace: flux
+  values:
+  - git:
+      branch: gitops
+      url: {{ exec "sh" (list "-c" "git config --get remote.origin.url | sed 's/\\.git$//'") }}
+      # See https://github.com/fluxcd/flux/issues/2046#issuecomment-492152108
+      # See https://github.com/fluxcd/flux/tree/master/chart/flux#configuration
+      secretName: {{ $fluxSecretName }}
