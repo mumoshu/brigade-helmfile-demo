@@ -47,17 +47,30 @@ tasks:
       type: string
     - name: repo
       type: string
+    - name: repodir
+      type: string
     - name: dir
       type: string
+    - name: pull-id
+      type: number
+    - name: inst-id
+      type: number
     script: |
       dir={{.dir}}
+      repodir={{.repodir}}
       branch={{.branch}}
+      repo={{.repo}}
       if [ ! -d $dir ]; then
-        git clone {{.repo}} $dir
-        (cd $dir; git checkout $branch
+        git clone git@github.com:${repo}.git $repodir
+        (cd $repodir; git checkout $branch
       fi
-      helmfile build {{ if .approved }}--annotate approved=true{{ end }} > $dir/helmfile.yaml
-      cd $dir
+      ns=cd.brigade.sh
+      helmfile build --annotate \
+        $ns/github-pull-id={{ get "pullId" }},$ns/github-app-inst-id={{ get "instId" }},$ns/git-repo=$repo \
+        --annotate $ns/git-branch=$branch,$ns/dir=$dir
+        {{ if .approved }},$ns/git-commit={{.ref}},approved=true{{ end }} \
+        > $repodir/$dir/helmfile.yaml
+      cd $repodir/$dir
       git add helmfile.yaml
       git commit -m 'Update'
       git push origin $branch
