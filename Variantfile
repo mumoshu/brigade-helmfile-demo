@@ -55,6 +55,8 @@ tasks:
       type: number
     - name: inst-id
       type: number
+    - name: rollout
+      type: bool
     script: |
       dir={{.dir}}
       repodir={{.repodir}}
@@ -65,7 +67,7 @@ tasks:
         (cd $repodir; git checkout $branch
       fi
       ns=cd.brigade.sh
-      helmfile build --annotate \
+      helmfile build {{ if .rollout }}--state-values-set rollout=true {{ end }}--annotate \
         $ns/github-pull-id={{ get "pullId" }},$ns/github-app-inst-id={{ get "instId" }},$ns/git-repo=$repo \
         --annotate $ns/git-branch=$branch,$ns/dir=$dir
         {{ if .approved }},$ns/git-commit={{.ref}},approved=true{{ end }} \
