@@ -16,6 +16,7 @@ const commands = {
     diff: 'Detect changes',
     test: 'Run integration tests',
     lint: 'Run lint checks',
+    deploy: 'Deploy changes',
 }
 
 // checkCommands is the list of commands that are triggered when a new commit is pushed to a pull request
@@ -29,6 +30,9 @@ const checkRunImage = "brigadecore/brigade-github-check-run:latest"
 
 // maxLogLines is the number of lines of logs for each check run that is shown in the GitHub Check UI
 const maxLogLines = 102400
+
+// kinds is the list of custom resource kinds, in their lower-cased names, that are handled and reconciled
+const kinds = ["releaseset"]
 
 // command creates a Brigade job for running `cmd`.
 function command(cmd, opts) {
@@ -60,9 +64,9 @@ function checkRunCompletionMessage(run) {
     return `${color} [${run.name}](${run.html_url}) on ${run.head_sha} finished with \`${conc}\``
 }
 
-function handleReleaseSet(action) {
+function handleReleaseSet(kind, action) {
     return async (e, p) => {
-        console.log("handling releaseset....")
+        console.log(`handling ${kind}...`)
         payload = JSON.parse(e.payload);
 
         console.log("project", p)
@@ -125,7 +129,7 @@ function handleReleaseSet(action) {
         let run = newCheckRunStart()
 
         function lastLines(text, n) {
-            return text.split("\n").slice(-1 - n,-1).join("\n") + "\n"
+            return text.split("\n").slice(-1 - n, -1).join("\n") + "\n"
         }
 
         await gh.addComment(payload.owner, payload.repo, payload.pull, `Processing ${action}`, ghtoken)
@@ -373,6 +377,9 @@ ${logs}`
     }
     return await end.run()
 }
+
+// CD events
+
 events.on("push", handlePush)
 events.on("issue_comment:created", handleIssueComment);
 // `check_suite:requested` seems to be triggered out of the band of brigade-github-app on every push to a pull request.
@@ -384,6 +391,11 @@ events.on("check_suite:rerequested", checkSuiteRequested('check_suite:rerequeste
 events.on("check_run:rerequested", checkRunReRequested('check_run:rerequested'))
 events.on("check_run:completed", checkCompleted)
 events.on("check_suite:completed", checkCompleted)
-events.on("releaseset:apply", handleReleaseSet("apply"))
-events.on("releaseset:plan", handleReleaseSet("plan"))
-events.on("releaseset:destroy", handleReleaseSet("destroy"))
+
+// CD events
+
+for (let k of kinds) {
+    events.on(`${k}:apply`, handleReleaseSet(k, "apply"))
+    events.on(`${k}:plan`, handleReleaseSet(k, "plan"))
+    events.on(`${k}:destroy`, handleReleaseSet(k, "destroy"))
+}

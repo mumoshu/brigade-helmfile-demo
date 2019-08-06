@@ -39,6 +39,29 @@ tasks:
       kubectl port-forward --namespace polaris svc/polaris-dashboard 8082:80 &
       open http://localhost:8082
 
+  deploy:
+    parameters:
+    - name: approved
+      type: bool
+    - name: branch
+      type: string
+    - name: repo
+      type: string
+    - name: dir
+      type: string
+    script: |
+      dir={{.dir}}
+      branch={{.branch}}
+      if [ ! -d $dir ]; then
+        git clone {{.repo}} $dir
+        (cd $dir; git checkout $branch
+      fi
+      helmfile build {{ if .approved }}--annotate approved=true{{ end }} > $dir/helmfile.yaml
+      cd $dir
+      git add helmfile.yaml
+      git commit -m 'Update'
+      git push origin $branch
+
   ngrok-setup:
     script: |
       open https://dashboard.ngrok.com/get-started
