@@ -1,9 +1,9 @@
 helmfiles:
-- .helmfile/istio-init.helmfile.yaml
+- .helmfile/istio-init.yaml
 - .helmfile/istio.yaml
 - .helmfile/flux.yaml
-- .helmfile/flagger.helmfile.yaml
-- .helmfile/brigade.helmfile.yaml
+- .helmfile/flagger.yaml
+- .helmfile/brigade.yaml
 
 repositories:
 - name: stable

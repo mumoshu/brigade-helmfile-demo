@@ -13,6 +13,40 @@ const commands = {
 }
 const checkCommands = ["diff", "lint"]
 const checkPrefix = "brigade"
+const checkRunImage = "brigadecore/brigade-github-check-run:latest"
+
+// maxLogLines is the number of lines of logs for each check run that is shown in the GitHub Check UI
+const maxLogLines = 102400
+
+// command creates a Brigade job for running `cmd`.
+function command(cmd, opts) {
+    let job = new Job(cmd, image)
+    job.tasks = [
+        "mkdir -p " + dest,
+        "cp -a /src/* " + dest,
+        "cd " + dest,
+        `${taskRunner} ${cmd}`,
+    ]
+    if (typeof opts == "object") {
+        for (let k of Object.keys(opts)) {
+            job[k] = opts[k]
+        }
+    }
+    return job
+}
+
+// checkRunCompletionMessage returns the message sent back to the pull request when a check run completed
+function checkRunCompletionMessage(run) {
+    let conc = run.conclusion
+    let color
+    // See https://stackoverflow.com/questions/11509830/how-to-add-color-to-githubs-readme-md-file how coloring works
+    if (conc == 'failure') {
+        color = '![#f03c15](https://placehold.it/15/f03c15/000000?text=+)'
+    } else {
+        color = '![#c5f015](https://placehold.it/15/c5f015/000000?text=+)'
+    }
+    return `${color} [${run.name}](${run.html_url}) on ${run.head_sha} finished with \`${conc}\``
+}
 
 function handleReleaseSet(action) {
     return async (e, p) => {
@@ -64,26 +98,19 @@ function handleReleaseSet(action) {
         }
 
         async function gatherLogs(build) {
-            let logLen = 102400
             let logs = "N/A"
             try {
                 logs = await build.logs()
             } catch (err2) {
                 console.log("failed while gathering logs", err2)
             }
-            if (logs.length > logLen) {
-                logs = logs.slice(logLen)
+            if (logs.length > maxLogLines) {
+                logs = logs.slice(maxLogLines)
             }
             return logs
         }
 
         let run = newCheckRunStart()
-
-        function doHelmfile(cmd) {
-            let build = newJobForCommand(cmd)
-            build.streamLogs = true
-            return build
-        }
 
         function lastLines(text, n) {
             return text.split("\n").slice(-1 - n,-1).join("\n") + "\n"
@@ -92,17 +119,18 @@ function handleReleaseSet(action) {
         await gh.addComment(payload.owner, payload.repo, payload.pull, `Processing ${action}`, ghtoken)
         await gh.createCheckRun(payload.owner, payload.repo, run, token)
         let build = null
+        let opts = {streamLogs: true}
         switch (action) {
             case "plan":
                 // We have no way to run use the brigade's built-in check-run container to create/update check runs for payloads sent from brigade-cd
                 // await checkWithHelmfile("diff", pr, e.payload, p)
-                build = doHelmfile("diff")
+                build = command("diff", opts)
                 break
             case "apply":
-                build = doHelmfile("apply")
+                build = command("apply", opts)
                 break
             case "destroy":
-                build = doHelmfile("destroy")
+                build = command("destroy", opts)
                 break
             default:
                 await gh.addComment(payload.owner, repo, payload.pull, `Unsupported command ${action}`, ghtoken)
@@ -166,11 +194,9 @@ function handlePush(e, p) {
     console.log("payload", e.payload)
     var gh = JSON.parse(e.payload)
     if (e.type != "pull_request") {
-        newJobForCommand("apply").run()
+        command("apply").run()
     }
 }
-
-const checkRunImage = "brigadecore/brigade-github-check-run:latest"
 
 function getSuiteFromPayload(payload) {
     let suite = undefined
@@ -205,15 +231,7 @@ async function checkCompleted(e, p) {
     if (payload.body.check_run) {
         let run = payload.body.check_run;
         suite = run.check_suite
-        let conc = run.conclusion
-        let color
-        // See https://stackoverflow.com/questions/11509830/how-to-add-color-to-githubs-readme-md-file how coloring works
-        if (conc == 'failure') {
-            color = '![#f03c15](https://placehold.it/15/f03c15/000000?text=+)'
-        } else {
-            color = '![#c5f015](https://placehold.it/15/c5f015/000000?text=+)'
-        }
-        msg = `${color} [${run.name}](${run.html_url}) on ${run.head_sha} finished with \`${conc}\``
+        msg = checkRunCompletionMessage(run)
     } else {
         suite = payload.body.check_suite
         msg = `Check suite [${suite.id}](${suite.url}) finished with \`${suite.conclusion}\``
@@ -282,7 +300,7 @@ async function checkWithHelmfile(cmd, pr, payload, p) {
     }
 
     // This will represent our build job. For us, it's just an empty thinger.
-    const build = newJobForCommand(cmd)
+    const build = command(cmd)
     build.streamLogs = true
 
     // For convenience, we'll create three jobs: one for each GitHub Check
@@ -343,18 +361,6 @@ ${logs}`
     }
     return await end.run()
 }
-
-function newJobForCommand(cmd) {
-    var job = new Job(cmd, image)
-    job.tasks = [
-        "mkdir -p " + dest,
-        "cp -a /src/* " + dest,
-        "cd " + dest,
-        `${taskRunner} ${cmd}`,
-    ]
-    return job
-}
-
 events.on("push", handlePush)
 events.on("issue_comment:created", handleIssueComment);
 // `check_suite:requested` seems to be triggered out of the band of brigade-github-app on every push to a pull request.
