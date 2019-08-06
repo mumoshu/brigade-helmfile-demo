@@ -3,15 +3,27 @@ const gh = require("./http")
 
 // Or `make` or whatever you like
 const taskRunner = 'variant'
-const dest = "/workspace"
+
+// workspace is the directory in jobs where the git repository is cloned to and tasks are run in
+const workspace = "/workspace"
+
+// image is the container image used for jobs, which should contain the task runner
 const image = "mumoshu/helmfile-chatops:0.2.0"
+
+// commands is the list of supported slash commands and its descriptions
 const commands = {
     apply: 'Apply changes',
     diff: 'Detect changes',
     test: 'Run integration tests',
     lint: 'Run lint checks',
 }
+
+// checkCommands is the list of commands that are triggered when a new commit is pushed to a pull request
 const checkCommands = ["diff", "lint"]
+
+// pushCommands is the list of commands that are triggered when a new commit is pushed to non-pr branches
+const pushCommands = ["apply"]
+
 const checkPrefix = "brigade"
 const checkRunImage = "brigadecore/brigade-github-check-run:latest"
 
@@ -22,9 +34,9 @@ const maxLogLines = 102400
 function command(cmd, opts) {
     let job = new Job(cmd, image)
     job.tasks = [
-        "mkdir -p " + dest,
-        "cp -a /src/* " + dest,
-        "cd " + dest,
+        "mkdir -p " + workspace,
+        "cp -a /src/* " + workspace,
+        "cd " + workspace,
         `${taskRunner} ${cmd}`,
     ]
     if (typeof opts == "object") {
@@ -189,12 +201,12 @@ async function handleIssueComment(e, p) {
     console.log(`No applicable action found for comment: ${comment}`);
 }
 
-function handlePush(e, p) {
+async function handlePush(e, p) {
     console.log("handling push....")
     console.log("payload", e.payload)
     var gh = JSON.parse(e.payload)
     if (e.type != "pull_request") {
-        command("apply").run()
+        return await Promise.all(pushCommands.map((c) => command(c).run()))
     }
 }
 
