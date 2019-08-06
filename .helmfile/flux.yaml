@@ -15,7 +15,9 @@ releases:
       metadata:
         name: {{ $fluxSecretName }}
       stringData:
-        mykey: |
+        # See https://github.com/fluxcd/flux/blob/1796ba1dd5a98fe90de1f0e40140f560b7b159d2/cmd/fluxd/main.go#L163
+        # for why this is named `identity`
+        identity: |
 {{ readFile (requiredEnv "SSH_KEY") | indent 10 }}
 - name: flux
   chart: fluxcd/flux
