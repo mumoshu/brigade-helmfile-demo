@@ -47,6 +47,7 @@ function command(cmd, opts) {
         "mkdir -p " + workspace,
         "cp -a /src/* " + workspace,
         "cd " + workspace,
+        `echo Running ${cmd} in directory: $(pwd)`,
         `${taskRunner} ${cmd}`,
     ]
     if (typeof opts == "object") {
