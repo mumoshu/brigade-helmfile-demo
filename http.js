@@ -107,7 +107,7 @@ function createIssueCommentReaction(owner, repo, comment, content, token) {
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `token ${token}`,
-            'Accept': `application/vnd.github.antiope-preview+json`
+            'Accept': `application/vnd.github.squirrel-girl-preview+json`
         },
         parameters: {
             content: content
