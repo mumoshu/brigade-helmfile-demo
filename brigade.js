@@ -202,7 +202,7 @@ async function handleIssueComment(e, p) {
         let cmds = Object.keys(commands)
         if (cmds.includes(cmd)) {
             if (handledReaction) {
-                gh.createIssueCommentReaction(owner, repo, commentId, supportedCommandReaction, ghtoken)
+                gh.createIssueCommentReaction(owner, repo, commentId, handledReaction, ghtoken)
             }
             await gh.addComment(owner, repo, issue, `Processing ${comment}`, ghtoken)
             await runGithubCheckWithHelmfile(cmd, e, p)
