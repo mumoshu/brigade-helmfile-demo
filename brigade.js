@@ -178,6 +178,7 @@ async function handleIssueComment(e, p) {
 
     // Extract the comment body and trim whitespace
     comment = payload.body.comment.body.trim();
+    commentId = payload.body.comment.id
 
     console.log("project", p)
     console.log("payload", payload)
@@ -188,6 +189,8 @@ async function handleIssueComment(e, p) {
     let repo = payload.body.repository.name;
     let issue = payload.body.issue.number;
     let ghtoken = p.secrets.githubToken;
+
+    let reaction = gh.createIssueCommentReaction(owner, repo, commentId, "+1", ghtoken)
 
     // Here we determine if a comment should provoke an action
     if (comment.startsWith("/")) {

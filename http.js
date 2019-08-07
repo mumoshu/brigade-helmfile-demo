@@ -101,6 +101,20 @@ function createCheckRun(owner, repo, params, token) {
     })
 }
 
+function createIssueCommentReaction(owner, repo, comment, content, token) {
+    return request(`https://api.github.com/repos/${owner}/${repo}/issues/comments/${comment}/reactions`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `token ${token}`,
+            'Accept': `application/vnd.github.antiope-preview+json`
+        },
+        parameters: {
+            content: content
+        }
+    })
+}
+
 function checkAuth(token) {
     return request(`https://api.github.com`, {
         method: 'GET',
@@ -113,5 +127,6 @@ function checkAuth(token) {
 
 module.exports.addComment = addComment
 module.exports.createCheckRun = createCheckRun
+module.exports.createIssueCommentReaction = createIssueCommentReaction
 module.exports.get = get
 module.exports.post = post
