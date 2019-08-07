@@ -381,6 +381,28 @@ ${logs}`
     return await end.run()
 }
 
+// parse parses a line of text to extract key-value pairs into a JavaScript object
+function parse(line) {
+    let kvs = line.split(" ")
+    let dict = {}
+    for (let kv of kvs) {
+        let k_v = kv.split('=')
+        let k = k_v[0].replace(/-/, '')
+        let v = k_v[1]
+        dict[k] = v
+    }
+    return dict
+}
+
+// toflags takes a JavaScript object and produces a line of text containing key-value pairs in space-separated `--key=value`-formatted pairs
+function toflags(dict) {
+    let line = ''
+    for(let k of Object.keys(dict)){
+        line += `--${k}=${dict[k]} `
+    }
+    return line
+}
+
 // CD events
 
 events.on("push", handlePush)
