@@ -34,6 +34,12 @@ const maxLogLines = 102400
 // kinds is the list of custom resource kinds, in their lower-cased names, that are handled and reconciled
 const kinds = ["releaseset"]
 
+// handledReaction is the reaction to be made on a handled issue comment
+const handledReaction = "+1"
+
+// unhandledReaction is the reaction to be made on a unhandled issue comment
+const unhandledReaction = "eyes"
+
 // command creates a Brigade job for running `cmd`.
 function command(cmd, opts) {
     let job = new Job(cmd, image)
@@ -190,19 +196,27 @@ async function handleIssueComment(e, p) {
     let issue = payload.body.issue.number;
     let ghtoken = p.secrets.githubToken;
 
-    let reaction = gh.createIssueCommentReaction(owner, repo, commentId, "+1", ghtoken)
-
     // Here we determine if a comment should provoke an action
     if (comment.startsWith("/")) {
         let cmd = comment.slice(1).split(' ')[0]
         let cmds = Object.keys(commands)
         if (cmds.includes(cmd)) {
+            if (handledReaction) {
+                gh.createIssueCommentReaction(owner, repo, commentId, supportedCommandReaction, ghtoken)
+            }
             await gh.addComment(owner, repo, issue, `Processing ${comment}`, ghtoken)
             await runGithubCheckWithHelmfile(cmd, e, p)
             await gh.addComment(owner, repo, issue, `Finished processing ${comment}`, ghtoken)
             return
         } else {
+            if (unhandledReaction) {
+                gh.createIssueCommentReaction(owner, repo, commentId, unhandledReaction, ghtoken)
+            }
             await gh.addComment('mumoshu', repo, issue, `Unsupported command ${comment}`, ghtoken)
+        }
+    } else {
+        if (unhandledReaction) {
+            gh.createIssueCommentReaction(owner, repo, commentId, unhandledReaction, ghtoken)
         }
     }
     console.log(`No applicable action found for comment: ${comment}`);
