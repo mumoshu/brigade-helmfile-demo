@@ -39,6 +39,44 @@ tasks:
       kubectl port-forward --namespace polaris svc/polaris-dashboard 8082:80 &
       open http://localhost:8082
 
+  deploy:
+    parameters:
+    - name: approved
+      type: bool
+    - name: branch
+      type: string
+    - name: repo
+      type: string
+    - name: repodir
+      type: string
+    - name: dir
+      type: string
+    - name: pull-id
+      type: number
+    - name: inst-id
+      type: number
+    - name: rollout
+      type: bool
+    script: |
+      dir={{.dir}}
+      repodir={{.repodir}}
+      branch={{.branch}}
+      repo={{.repo}}
+      if [ ! -d $dir ]; then
+        git clone git@github.com:${repo}.git $repodir
+        (cd $repodir; git checkout $branch
+      fi
+      ns=cd.brigade.sh
+      helmfile build {{ if .rollout }}--state-values-set rollout=true {{ end }}--annotate \
+        $ns/github-pull-id={{ get "pullId" }},$ns/github-app-inst-id={{ get "instId" }},$ns/git-repo=$repo \
+        --annotate $ns/git-branch=$branch,$ns/dir=$dir
+        {{ if .approved }},$ns/git-commit={{.ref}},approved=true{{ end }} \
+        > $repodir/$dir/helmfile.yaml
+      cd $repodir/$dir
+      git add helmfile.yaml
+      git commit -m 'Update'
+      git push origin $branch
+
   ngrok-setup:
     script: |
       open https://dashboard.ngrok.com/get-started
@@ -58,3 +96,12 @@ tasks:
       image_tag=mumoshu/helmfile-chatops:0.2.1
       docker build -t $image_tag .
       docker push $image_tag
+
+  gitips:
+    tasks:
+      init:
+        script: |
+          git checkout —orphan gitops
+          git commit --allow-empty -m "first commit"
+          git push origin gitops
+

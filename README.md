@@ -1,5 +1,5 @@
 ## State of the Art of GitOps with Helm
-x
+xx
 
 Highly customizable GitOps pipeline built with Helm
 

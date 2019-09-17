@@ -20,11 +20,14 @@ const request = function (urlstr, options) {
         options.headers['User-Agent'] = 'Brigade-Worker'
         params = options.parameters
         delete options.parameters
+        let reqbody = ''
         if (params) {
-            body = JSON.stringify(params)
-            options.headers['Content-Length'] = body.length
+            reqbody = JSON.stringify(params)
+            options.headers['Content-Length'] = Buffer.byteLength(reqbody)
+
+            console.log('http.request.params', params)
         }
-        console.log('http.request', options)
+        console.log('http.request.options', options)
         const request = lib.request(options, (response) => {
             console.log('http.response', { status: `${response.statusCode}`, headers: JSON.stringify(response.headers) });
             response.setEncoding('utf8');
@@ -46,7 +49,8 @@ const request = function (urlstr, options) {
         // handle connection errors of the request
         request.on('error', (err) => reject(err))
         if (params) {
-            request.write(body)
+            console.log('http.request.body', reqbody)
+            request.write(reqbody)
         }
         request.end()
     })
@@ -85,6 +89,33 @@ function post(url, params, token) {
     })
 }
 
+function createCheckRun(owner, repo, params, token) {
+    return request(`https://api.github.com/repos/${owner}/${repo}/check-runs`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `token ${token}`,
+            'Accept': `application/vnd.github.antiope-preview+json`
+        },
+        parameters: params,
+    })
+}
+
+function createIssueCommentReaction(owner, repo, comment, content, token) {
+    return request(`https://api.github.com/repos/${owner}/${repo}/issues/comments/${comment}/reactions`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `token ${token}`,
+            // See https://developer.github.com/v3/reactions/#create-reaction-for-an-issue-comment
+            'Accept': `application/vnd.github.squirrel-girl-preview+json`
+        },
+        parameters: {
+            content: content
+        }
+    })
+}
+
 function checkAuth(token) {
     return request(`https://api.github.com`, {
         method: 'GET',
@@ -96,5 +127,7 @@ function checkAuth(token) {
 }
 
 module.exports.addComment = addComment
+module.exports.createCheckRun = createCheckRun
+module.exports.createIssueCommentReaction = createIssueCommentReaction
 module.exports.get = get
 module.exports.post = post
